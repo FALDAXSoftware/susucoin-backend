@@ -15,7 +15,7 @@ var i18n = require("i18n");
 var Helper = require("../../helpers/helpers");
 var addressHelper = require("../../helpers/get-new-address");
 var sendHelper = require("../../helpers/send");
-var sendHelper = require("../../helpers/send");
+var balanceHelper = require("../../helpers/get-wallet-balance");
 const constants = require('../../config/constants');
 // Controllers
 var { AppController } = require('./AppController');
@@ -146,7 +146,7 @@ class UsersController extends AppController {
 
     // Send susu coin to User Address
 
-    async createSendFund(req, res) {
+    async userSendFund(req, res) {
         try {
             var user_id = req.body.user_id;
             var amount = req.body.amount;
@@ -168,14 +168,14 @@ class UsersController extends AppController {
                     .andWhere("coin_id", coinData.id)
                     .orderBy('id', 'DESC')
 
-                console.log("walletData", walletData)    
+                console.log("walletData", walletData)
 
                 if (walletData != undefined) {
 
                     var sendObject = {
-                        "address" : walletData.send_address,
-                        "amount" : amount,
-                        "message" : "test"
+                        "address": walletData.send_address,
+                        "amount": amount,
+                        "message": "test"
                     }
 
                     var userReceiveAddress = await sendHelper.sendData(sendObject);
@@ -223,6 +223,23 @@ class UsersController extends AppController {
         }
     }
 
+    async getUserBalance(req, res) {
+        try {
+            var address = req.body.address;
+
+            var balanceValue = await balanceHelper.balanceData(address);
+            console.log("balanceValue", balanceValue)
+            return res
+                .status(200)
+                .json({
+                    "status": 200,
+                    "message": "User Balance has been retrieved successfully",
+                    "data": balanceValue
+                })
+        } catch (error) {
+            console.log(error)
+        }
+    }
 }
 
 

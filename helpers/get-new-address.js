@@ -5,12 +5,10 @@ var addressData = async () => {
     var newAddress;
     var encodeKey = await encodeCredentials.encodeData();
 
-    console.log(encodeKey)
-
     // Get new address.
     var bodyData = {
         'jsonrpc': '2.0',
-        'id': '1',
+        'id': '0',
         'method': 'getnewaddress'
     }
 

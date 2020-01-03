@@ -5,16 +5,13 @@ var sendData = async (sendInfo) => {
     var sendedFundStatus;
     var encodeKey = await encodeCredentials.encodeData();
 
-    console.log(encodeKey)
-    console.log(sendInfo)
-
     //Body Data for sending funds
     var bodyData = {
         'jsonrpc': '2.0',
         'id': '0',
         'method': 'sendtoaddress',
         'params': [sendInfo.address, sendInfo.amount, sendInfo.message]
-      }
+    }
 
     try {
 
@@ -28,7 +25,6 @@ var sendData = async (sendInfo) => {
         })
             .then(resData => resData.json())
             .then(resData => {
-                console.log("resData", resData)
                 sendedFundStatus = resData.result;
             })
         return sendedFundStatus;

@@ -7,8 +7,8 @@ var CoinsRoute = require("../controllers/v1/CoinsController");
 
 app.get("/api/v1/get-susu-coin-address", CoinsRoute.updateWalletAddress);
 app.post("/api/v1/create-susu-coin-address", CoinsRoute.createUserAddress);
-app.post("/api/v1/send-susu-coin-address", CoinsRoute.createSendFund);
-
+app.post("/api/v1/send-susu-coin-address", CoinsRoute.userSendFund);
+app.post("/api/v1/get-user-balance", CoinsRoute.getUserBalance);
 
 
 app.use(function (req, res, next) {
