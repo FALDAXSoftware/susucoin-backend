@@ -59,13 +59,15 @@ class UsersController extends AppController {
                     .andWhere("coin_id", coinData.id)
                     .orderBy('id', 'DESC')
 
+                console.log("walletData", walletData)
+
                 if (walletData == undefined) {
                     var userReceiveAddress = await addressHelper.addressData();
                     var userSendAddress = await addressHelper.addressData();
 
-                    await WalletModel
+                    var dataValue = await WalletModel
                         .query()
-                        .insert({
+                        .insertAndFetch({
                             "receive_address": userReceiveAddress,
                             "send_address": userSendAddress,
                             "coin_id": coinData.id,
@@ -81,7 +83,8 @@ class UsersController extends AppController {
                         .status(200)
                         .json({
                             "status": 200,
-                            "message": "User Address has been created successfully."
+                            "message": "User Address has been created successfully.",
+                            "data": dataValue
                         })
                 } else {
                     return res
