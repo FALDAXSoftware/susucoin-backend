@@ -25,20 +25,11 @@ var balanceData = async (address) => {
         })
             .then(resData => resData.json())
             .then(resData => {
-                console.log(resData.result.length)
-                var flag = false;
                 for (var i = 0; i < resData.result.length; i++) {
-                    console.log("resData.result[i].address", resData.result[i].address)
                     if (address == resData.result[i].address) {
-                        balanceValue = resData.result[i].amount
-                        flag = true;
+                        balanceValue = resData.result[i].txids
                     }
                 }
-
-                if (flag == false) {
-                    balanceValue = 0;
-                }
-                // sendedFundStatus = resData.result;
             })
         return balanceValue;
     } catch (error) {
