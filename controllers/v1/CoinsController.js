@@ -18,6 +18,7 @@ var sendHelper = require("../../helpers/send");
 var balanceHelper = require("../../helpers/get-receiveby-address");
 var transactionHelper = require("../../helpers/get-wallet-balance");
 var transactionDetailHelper = require("../../helpers/get-transaction");
+var listTransactionHelper = require("../../helpers/list-transaction")
 const constants = require('../../config/constants');
 // Controllers
 var { AppController } = require('./AppController');
@@ -274,6 +275,23 @@ class UsersController extends AppController {
             console.log(error)
         }
     }
+
+    async getListTransactions(req, res) {
+        try {
+            var transactionList = await listTransactionHelper.listTransaction()
+            console.log(transactionList)
+            return res
+                .status(200)
+                .json({
+                    "status": 200,
+                    "message": "Transaction Details has been retreived Successfully",
+                    "data": transactionList
+                })
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
 }
 
 

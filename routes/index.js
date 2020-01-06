@@ -10,6 +10,7 @@ app.post("/api/v1/create-susu-coin-address", CoinsRoute.createUserAddress);
 app.post("/api/v1/send-susu-coin-address", CoinsRoute.userSendFund);
 app.post("/api/v1/get-user-balance", CoinsRoute.getUserBalance);
 app.post("/api/v1/get-user-transaction-list", CoinsRoute.getUserTransactions);
+app.get("/api/v1/list-transactions-list", CoinsRoute.getListTransactions);
 
 
 app.use(function (req, res, next) {
