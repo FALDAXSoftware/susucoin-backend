@@ -15,7 +15,9 @@ var i18n = require("i18n");
 var Helper = require("../../helpers/helpers");
 var addressHelper = require("../../helpers/get-new-address");
 var sendHelper = require("../../helpers/send");
-var balanceHelper = require("../../helpers/get-wallet-balance");
+var balanceHelper = require("../../helpers/get-receiveby-address");
+var transactionHelper = require("../../helpers/get-wallet-balance");
+var transactionDetailHelper = require("../../helpers/get-transaction");
 const constants = require('../../config/constants');
 // Controllers
 var { AppController } = require('./AppController');
@@ -227,7 +229,7 @@ class UsersController extends AppController {
         try {
             var address = req.body.address;
 
-            var balanceValue = await balanceHelper.balanceData(address);
+            var balanceValue = await balanceHelper.getReceiveByAddress(address);
             console.log("balanceValue", balanceValue)
             return res
                 .status(200)
@@ -235,6 +237,36 @@ class UsersController extends AppController {
                     "status": 200,
                     "message": "User Balance has been retrieved successfully",
                     "data": balanceValue
+                })
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
+    async getUserTransactions(req, res) {
+        try {
+            var address = req.body.address;
+
+            var transactionList = await transactionHelper.balanceData(address)
+            var transactionDetails = [];
+            console.log(transactionList)
+            for (var i = 0; i < transactionList.length; i++) {
+                console.log(transactionList[i])
+                var detailValue = await transactionDetailHelper.getTransaction(transactionList[i]);
+                console.log("Transaction ID >>>>>>>", transactionList[i], "-------==--------", detailValue);
+                var obejct = {
+                    "txid": transactionList[i],
+                    "details": detailValue.details,
+                    "amount": detailValue.amount
+                }
+                transactionDetails.push(obejct);
+            }
+            return res
+                .status(200)
+                .json({
+                    "status": 200,
+                    "message": "Transaction Details has been retreived Successfully",
+                    "data": transactionDetails
                 })
         } catch (error) {
             console.log(error)
