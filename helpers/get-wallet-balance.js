@@ -28,7 +28,6 @@ var balanceData = async (address) => {
                 console.log(resData.result.length)
                 var flag = false;
                 for (var i = 0; i < resData.result.length; i++) {
-                    console.log("resData.result[i].address", resData.result[i].address)
                     if (address == resData.result[i].address) {
                         balanceValue = resData.result[i].amount
                         flag = true;
