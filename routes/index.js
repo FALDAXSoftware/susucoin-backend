@@ -11,6 +11,7 @@ app.post("/api/v1/send-susu-coin-address", CoinsRoute.userSendFund);
 app.post("/api/v1/get-user-balance", CoinsRoute.getUserBalance);
 app.post("/api/v1/get-user-transaction-list", CoinsRoute.getUserTransactions);
 app.get("/api/v1/list-transactions-list", CoinsRoute.getListTransactions);
+app.get("/get/v1/get-webhook-data", CoinsRoute.returnWebhookdata);
 
 
 app.use(function (req, res, next) {

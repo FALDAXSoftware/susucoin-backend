@@ -1,17 +1,29 @@
 var fetch = require('node-fetch')
 var encodeCredentials = require("./encode-auth");
 
-var listTransaction = async (txid) => {
+var listTransaction = async (start, end) => {
     var transactionData;
 
     var encodeKey = await encodeCredentials.encodeData();
 
-    // Get new address.
-    var bodyData = {
-        'jsonrpc': '2.0',
-        'id': '0',
-        'method': 'listtransactions'
+    var bodyData
+    console.log(start && end)
+    // Get Transaction List.
+    if (start >= 0 && end >= 0) {
+        bodyData = {
+            'jsonrpc': '2.0',
+            'id': '0',
+            'method': 'listtransactions',
+            'params': ["*", start, end]
+        }
+    } else {
+        bodyData = {
+            'jsonrpc': '2.0',
+            'id': '0',
+            'method': 'listtransactions'
+        }
     }
+
 
     try {
 
@@ -25,7 +37,6 @@ var listTransaction = async (txid) => {
         })
             .then(resData => resData.json())
             .then(resData => {
-                console.log(resData.result)
                 transactionData = resData.result;
             })
         return transactionData;
