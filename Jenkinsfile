@@ -45,6 +45,7 @@ def getNamespace(branch){
     switch(branch){
         case 'master' : return "prod";
         case 'development' :  return "dev";
+        case 'feature-k8s-support' :  return "dev";
         default : return null;
     }
 }
