@@ -1,4 +1,4 @@
-FROM 100.69.158.196/buildtool:pm291
+FROM keymetrics/pm2:8-alpine
 WORKDIR /usr/share/nginx/html/susucoin-nodejs
 COPY package*.json ./
 RUN npm install
