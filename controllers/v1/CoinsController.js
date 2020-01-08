@@ -158,7 +158,7 @@ class UsersController extends AppController {
             var coinData = await CoinsModel
                 .query()
                 .first()
-                .where('deleted_at', null)
+                // .where('deleted_at', null)
                 .andWhere('coin_code', process.env.COIN)
                 // .andWhere('is_active', true)
                 .andWhere('type', 2)
@@ -174,8 +174,6 @@ class UsersController extends AppController {
                     .andWhere("coin_id", coinData.id)
                     .orderBy('id', 'DESC')
 
-                console.log("walletData", walletData)
-
                 if (walletData != undefined) {
 
                     var sendObject = {
@@ -185,8 +183,11 @@ class UsersController extends AppController {
                     }
 
                     var userReceiveAddress = await sendHelper.sendData(sendObject);
+                    var getTransactionDetails = await transactionDetailHelper.getTransaction(userReceiveAddress);
+                    console.log(getTransactionDetails)
+                    if (getTransactionDetails != undefined) {
 
-                    console.log("awwd", userReceiveAddress)
+                    }
 
                     // await WalletModel
                     //     .query()
@@ -307,19 +308,22 @@ class UsersController extends AppController {
                     }
                     console.log(data.toString());
                     var value = data.toString();
-                    transactionHash = value
-                    console.log(transactionHash)
+                    transactionHash = value.split(`"`)
                     if (flag == 1) {
-                        resolve(transactionHash);
+                        resolve(transactionHash[1]);
                     }
                 })
             } else {
                 if (flag == 2) {
-                    await fs.writeFile("transaction.txt", JSON.stringify(dataValue), async function (err) {
+                    var value = await fs.writeFile("transaction.txt", JSON.stringify(dataValue), async function (err) {
                         if (err) {
                             console.log(err)
+                        } else {
+                            value = "File Written Successfully";
                         }
+                        return value;
                     })
+                    transactionHash = value;
                 } else {
                     transactionHash = ''
                 }
@@ -334,39 +338,55 @@ class UsersController extends AppController {
             var flagValue = false;
             for (var i = (dataValue.length - 1); i >= index; i--) {
                 console.log(dataValue[i].txid == transactionValue)
+                console.log("dataValue >>>>>>>>>", dataValue[i]);
                 if (dataValue[i].txid == transactionValue) {
                     flagValue == true;
                     return 1;
                 } else if (dataValue[i].category == "receive") {
-                    var walletData = await WalletModel
+                    var walletHistoryData = await WalletHistoryModel
                         .query()
                         .first()
-                        .select()
-                        .where('receive_address', dataValue[i].address)
-                        .andWhere('deleted_at', null)
+                        .where('deleted_at', null)
+                        .andWhere('transaction_id', dataValue[i].txid)
+                        .andWhere('transaction_type', 'receive')
                         .orderBy('id', 'DESC');
 
-                    if (walletData != undefined) {
-                        var walletHistoryData = await WalletHistoryModel
-                            .query()
-                            .insert({
-                                'destination_address': dataValue[i].address,
-                                'created_at': new Date(),
-                                'amount': dataValue[i].amount,
-                                'coin_id': walletData.coin_id,
-                                'transaction_id': dataValue[i].txid,
-                                'user_id': walletData.user_id,
-                                'faldax_fee': 0.0,
-                                'network_fees': (dataValue[i].fee) ? (dataValue[i].fee) : (0.0)
-                            })
-
-                        var data = await WalletHistoryModel
+                    if (walletHistoryData == undefined) {
+                        var walletData = await WalletModel
                             .query()
                             .first()
                             .select()
-                            .where('destination_address', dataValue[i].address)
-                            .orderBy('id', 'DESC')
-                        console.log(data)
+                            .where('receive_address', dataValue[i].address)
+                            .andWhere('deleted_at', null)
+                            .orderBy('id', 'DESC');
+
+                        if (walletData != undefined) {
+                            var walletHistoryData = await WalletHistoryModel
+                                .query()
+                                .insert({
+                                    'destination_address': dataValue[i].address,
+                                    'created_at': new Date(),
+                                    'amount': dataValue[i].amount,
+                                    'coin_id': walletData.coin_id,
+                                    'transaction_type': 'receive',
+                                    'transaction_id': dataValue[i].txid,
+                                    'user_id': walletData.user_id,
+                                    'faldax_fee': 0.0,
+                                    'network_fees': (dataValue[i].fee) ? (dataValue[i].fee) : (0.0)
+                                })
+
+                            var updatedBalance = parseFloat(walletData.balance) + parseFloat(dataValue[i].amount)
+                            var updatedPlacedBalance = parseFloat(walletData.placed_balance) + parseFloat(dataValue[i].amount)
+
+                            var balanceData = await WalletModel
+                                .query()
+                                .where('receive_address', dataValue[i].address)
+                                .andWhere('deleted_at', null)
+                                .patch({
+                                    'balance': updatedBalance,
+                                    'placed_balance': updatedPlacedBalance
+                                });
+                        }
                     }
                 }
                 if (flagValue == true) {
@@ -387,11 +407,15 @@ class UsersController extends AppController {
         try {
             var transactionHash;
             var transactionValue = await module.exports.fileValueUpdate("", 1)
-            console.log("transactionValue", transactionValue)
             var dataValue = await listTransactionHelper.listTransaction(10, 0);
             var data = dataValue[dataValue.length - 1].txid;
             var value = await module.exports.getTransactionData(false, 10, 0, transactionValue)
             var transactionValue = await module.exports.fileValueUpdate(data, 2)
+            return res
+                .status(200)
+                .json({
+                    "status": 200
+                })
         } catch (error) {
             console.log(error);
         }
