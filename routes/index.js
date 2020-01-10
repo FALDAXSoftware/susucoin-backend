@@ -12,6 +12,7 @@ app.post("/api/v1/get-user-balance", CoinsRoute.getUserBalance);
 app.post("/api/v1/get-user-transaction-list", CoinsRoute.getUserTransactions);
 app.get("/api/v1/list-transactions-list", CoinsRoute.getListTransactions);
 app.get("/get/v1/get-webhook-data", CoinsRoute.returnWebhookdata);
+app.get("/api/v1/get-currency-converted-value", CoinsRoute.getEquivalentValue);
 
 
 app.use(function (req, res, next) {

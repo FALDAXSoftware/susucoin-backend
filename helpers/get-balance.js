@@ -1,16 +1,15 @@
 var fetch = require('node-fetch')
 var encodeCredentials = require("./encode-auth");
 
-var sendData = async (sendInfo) => {
-    var sendedFundStatus;
+var balanceData = async () => {
+    var balanceValue;
     var encodeKey = await encodeCredentials.encodeData();
 
-    //Body Data for sending funds
+    // Get new address.
     var bodyData = {
         'jsonrpc': '2.0',
         'id': '0',
-        'method': 'sendtoaddress',
-        'params': [sendInfo.address, sendInfo.amount, sendInfo.message]
+        'method': 'getbalance'
     }
 
     try {
@@ -23,17 +22,20 @@ var sendData = async (sendInfo) => {
                 'Authorization': 'Basic ' + encodeKey
             }
         })
-            .then(resData => resData.json())
             .then(resData => {
                 console.log(resData)
-                sendedFundStatus = resData.result;
+                resData.json()
             })
-        return sendedFundStatus;
+            .then(resData => {
+                console.log("resData", resData)
+                balanceValue = resData.result;
+            })
+        return balanceValue;
     } catch (error) {
-        console.log("Send fund error :: ", error);
+        console.log("Address Generation error :: ", error);
     }
 }
 
 module.exports = {
-    sendData
+    balanceData
 }

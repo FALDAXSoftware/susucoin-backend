@@ -11,6 +11,8 @@ var http = require('http');
 var i18n = require("i18n");
 const Validator = require('node-input-validator');
 var session = require('express-session')
+var cron = require('node-cron');
+// var coinController = require("./controllers/v1/CoinsController")
 
 app.use(cors())
 
@@ -84,3 +86,5 @@ app.set('port', process.env.PORT);
 server.listen(app.get('port'), function () {
   console.log(process.env.PROJECT_NAME + " Application is running on " + process.env.PORT + " port....");
 });
+
+var cronjobFile = require("./services/cronJobs");

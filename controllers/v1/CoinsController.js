@@ -20,6 +20,8 @@ var balanceHelper = require("../../helpers/get-receiveby-address");
 var transactionHelper = require("../../helpers/get-wallet-balance");
 var transactionDetailHelper = require("../../helpers/get-transaction");
 var listTransactionHelper = require("../../helpers/list-transaction")
+var balanceValueHelper = require("../../helpers/get-balance");
+var currencyConversionHelper = require("../../helpers/get-currency-conversion");
 const constants = require('../../config/constants');
 // Controllers
 var { AppController } = require('./AppController');
@@ -153,8 +155,12 @@ class UsersController extends AppController {
 
     async userSendFund(req, res) {
         try {
+            console.log(req.body)
             var user_id = req.body.user_id;
             var amount = req.body.amount;
+            var destination_address = req.body.destination_address;
+            var faldax_fee = req.body.faldax_fee;
+            var network_fee = req.body.network_fee;
             var coinData = await CoinsModel
                 .query()
                 .first()
@@ -174,41 +180,73 @@ class UsersController extends AppController {
                     .andWhere("coin_id", coinData.id)
                     .orderBy('id', 'DESC')
 
+                var getAccountBalance = await balanceValueHelper.balanceData();
                 if (walletData != undefined) {
+                    var balanceChecking = parseFloat(amount) + parseFloat(faldax_fee) + parseFloat(network_fee)
+                    console.log(balanceChecking)
+                    if (getAccountBalance >= balanceChecking) {
+                        if (walletData.placed_balance >= balanceChecking) {
+                            var sendObject = {
+                                "address": destination_address,
+                                "amount": amount,
+                                "message": "test"
+                            }
 
-                    var sendObject = {
-                        "address": walletData.send_address,
-                        "amount": amount,
-                        "message": "test"
+                            var userReceiveAddress = await sendHelper.sendData(sendObject);
+                            console.log("userReceiveAddress", userReceiveAddress)
+                            var getTransactionDetails = await transactionDetailHelper.getTransaction(userReceiveAddress);
+                            console.log(getTransactionDetails)
+                            if (getTransactionDetails != undefined) {
+                                var balanceUpdate = parseFloat(faldax_fee) + parseFloat(Math.abs(getTransactionDetails.fee))
+                                console.log("balanceUpdate", balanceUpdate)
+                                var walletDataUpdate = await WalletModel
+                                    .query()
+                                    .where("deleted_at", null)
+                                    .andWhere("user_id", user_id)
+                                    .andWhere("coin_id", coinData.id)
+                                    .patch({
+                                        "balance": parseFloat(walletData.balance) - parseFloat(balanceUpdate),
+                                        "placed_balance": parseFloat(walletData.placed_balance) - parseFloat(balanceUpdate)
+                                    })
+                                var transactionData = await WalletHistoryModel
+                                    .query()
+                                    .insert({
+                                        "source_address": walletData.send_address,
+                                        "destination_address": destination_address,
+                                        "amount": Math.abs(getTransactionDetails.details[0].amount),
+                                        "transaction_type": "send",
+                                        "created_at": new Date(),
+                                        "coin_id": coinData.id,
+                                        "transaction_id": getTransactionDetails.txid,
+                                        "faldax_fee": faldax_fee,
+                                        "network_fees": -(getTransactionDetails.fee),
+                                        "user_id": walletData.user_id
+                                    });
+
+                            }
+
+                            return res
+                                .status(200)
+                                .json({
+                                    "status": 200,
+                                    "message": "Send Coins successfully."
+                                })
+                        } else {
+                            return res
+                                .status(201)
+                                .json({
+                                    "status": 201,
+                                    "message": "Insufficient Balance in the wallet"
+                                })
+                        }
+                    } else {
+                        return res
+                            .status(201)
+                            .json({
+                                "status": 201,
+                                "message": "Insufficient Actual Balance in the wallet"
+                            })
                     }
-
-                    var userReceiveAddress = await sendHelper.sendData(sendObject);
-                    var getTransactionDetails = await transactionDetailHelper.getTransaction(userReceiveAddress);
-                    console.log(getTransactionDetails)
-                    if (getTransactionDetails != undefined) {
-
-                    }
-
-                    // await WalletModel
-                    //     .query()
-                    //     .insert({
-                    //         "receive_address": userReceiveAddress,
-                    //         "send_address": userSendAddress,
-                    //         "coin_id": coinData.id,
-                    //         "user_id": user_id,
-                    //         "deleted_at": null,
-                    //         "created_at": Date.now(),
-                    //         "wallet_id": "wallet",
-                    //         "address_label": label,
-                    //         "balance": 0.0,
-                    //         "placed_balance": 0.0
-                    //     })
-                    return res
-                        .status(200)
-                        .json({
-                            "status": 200,
-                            "message": "Send Coins successfully."
-                        })
                 } else {
                     return res
                         .status(400)
@@ -231,6 +269,7 @@ class UsersController extends AppController {
         }
     }
 
+    // Get User Balance
     async getUserBalance(req, res) {
         try {
             var address = req.body.address;
@@ -249,6 +288,7 @@ class UsersController extends AppController {
         }
     }
 
+    // Get User Transactions Value
     async getUserTransactions(req, res) {
         try {
             var address = req.body.address;
@@ -279,6 +319,7 @@ class UsersController extends AppController {
         }
     }
 
+    // Get List of Transactions
     async getListTransactions(req, res) {
         try {
             var transactionList = await listTransactionHelper.listTransaction()
@@ -295,6 +336,7 @@ class UsersController extends AppController {
         }
     }
 
+    // Update File trnasaction Value for next webhook
     async fileValueUpdate(dataValue, flag) {
         return new Promise(async (resolve, reject) => {
             if (flag == 2) {
@@ -304,9 +346,8 @@ class UsersController extends AppController {
             if (fs.existsSync('transaction.txt')) {
                 await fs.readFile('transaction.txt', (err, data) => {
                     if (err) {
-                        console.log(data)
+                        console.log(err)
                     }
-                    console.log(data.toString());
                     var value = data.toString();
                     transactionHash = value.split(`"`)
                     if (flag == 1) {
@@ -332,13 +373,12 @@ class UsersController extends AppController {
         })
     }
 
+    // If file transaction value and latest transaction are same then do nothing or if receive then update user wallet
     async getTransactionData(flag, entries, index, transactionValue) {
         if (flag == false || flag == "false" && entries < 50) {
             var dataValue = await listTransactionHelper.listTransaction(entries, index);
             var flagValue = false;
             for (var i = (dataValue.length - 1); i >= index; i--) {
-                console.log(dataValue[i].txid == transactionValue)
-                console.log("dataValue >>>>>>>>>", dataValue[i]);
                 if (dataValue[i].txid == transactionValue) {
                     flagValue == true;
                     return 1;
@@ -403,24 +443,35 @@ class UsersController extends AppController {
         }
     }
 
-    async returnWebhookdata(req, res) {
+    // Webhook for transaction history
+    async returnWebhookdata() {
         try {
+            console.log("ISNIDE METHOD")
             var transactionHash;
             var transactionValue = await module.exports.fileValueUpdate("", 1)
             var dataValue = await listTransactionHelper.listTransaction(10, 0);
             var data = dataValue[dataValue.length - 1].txid;
             var value = await module.exports.getTransactionData(false, 10, 0, transactionValue)
             var transactionValue = await module.exports.fileValueUpdate(data, 2)
-            return res
-                .status(200)
-                .json({
-                    "status": 200
-                })
         } catch (error) {
             console.log(error);
         }
     }
 
+    async getEquivalentValue(req, res) {
+        try {
+            var data = await currencyConversionHelper.convertValue();
+            return res
+                .status(200)
+                .json({
+                    "status": 200,
+                    "message": "Currency Value has been retrieved successfully",
+                    "data": data
+                })
+        } catch (error) {
+            console.log(error);
+        }
+    }
 }
 
 
