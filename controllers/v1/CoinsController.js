@@ -179,108 +179,108 @@ class UsersController extends AppController {
                     .andWhere("coin_id", coinData.id)
                     .orderBy('id', 'DESC')
 
-                var getAccountBalance = await balanceValueHelper.balanceData();
+                // var getAccountBalance = await balanceValueHelper.balanceData();
                 if (walletData != undefined) {
                     var balanceChecking = parseFloat(amount) + parseFloat(faldax_fee) + parseFloat(network_fee)
-                    if (getAccountBalance >= balanceChecking) {
-                        if (walletData.placed_balance >= balanceChecking) {
-                            var sendObject = {
-                                "address": destination_address,
-                                "amount": amount,
-                                "message": "test"
-                            }
+                    // if (getAccountBalance >= balanceChecking) {
+                    if (walletData.placed_balance >= balanceChecking) {
+                        var sendObject = {
+                            "address": destination_address,
+                            "amount": amount,
+                            "message": "test"
+                        }
 
-                            var userReceiveAddress = await sendHelper.sendData(sendObject);
-                            var getTransactionDetails = await transactionDetailHelper.getTransaction(userReceiveAddress);
-                            if (getTransactionDetails != undefined) {
-                                var balanceUpdate = parseFloat(faldax_fee) + parseFloat(Math.abs(getTransactionDetails.fee))
-                                var walletDataUpdate = await WalletModel
+                        var userReceiveAddress = await sendHelper.sendData(sendObject);
+                        var getTransactionDetails = await transactionDetailHelper.getTransaction(userReceiveAddress);
+                        if (getTransactionDetails != undefined) {
+                            var balanceUpdate = parseFloat(faldax_fee) + parseFloat(Math.abs(getTransactionDetails.fee))
+                            var walletDataUpdate = await WalletModel
+                                .query()
+                                .where("deleted_at", null)
+                                .andWhere("user_id", user_id)
+                                .andWhere("coin_id", coinData.id)
+                                .patch({
+                                    "balance": parseFloat(walletData.balance) - parseFloat(balanceUpdate),
+                                    "placed_balance": parseFloat(walletData.placed_balance) - parseFloat(balanceUpdate)
+                                })
+                            var transactionData = await WalletHistoryModel
+                                .query()
+                                .insert({
+                                    "source_address": walletData.send_address,
+                                    "destination_address": destination_address,
+                                    "amount": Math.abs(getTransactionDetails.details[0].amount),
+                                    "transaction_type": "send",
+                                    "created_at": new Date(),
+                                    "coin_id": coinData.id,
+                                    "transaction_id": getTransactionDetails.txid,
+                                    "faldax_fee": faldax_fee,
+                                    "network_fees": -(getTransactionDetails.fee),
+                                    "user_id": walletData.user_id
+                                });
+                            var walletBalance = await WalletModel
+                                .query()
+                                .first()
+                                .where("deleted_at", null)
+                                .andWhere("coin_id", coinData.id)
+                                .andWhere("is_admin", true)
+                                .andWhere("user_id", 36)
+                                .orderBy('id', 'DESC')
+
+                            if (walletBalance != undefined) {
+                                var updateWalletBalance = await WalletModel
                                     .query()
-                                    .where("deleted_at", null)
-                                    .andWhere("user_id", user_id)
-                                    .andWhere("coin_id", coinData.id)
-                                    .patch({
-                                        "balance": parseFloat(walletData.balance) - parseFloat(balanceUpdate),
-                                        "placed_balance": parseFloat(walletData.placed_balance) - parseFloat(balanceUpdate)
-                                    })
-                                var transactionData = await WalletHistoryModel
-                                    .query()
-                                    .insert({
-                                        "source_address": walletData.send_address,
-                                        "destination_address": destination_address,
-                                        "amount": Math.abs(getTransactionDetails.details[0].amount),
-                                        "transaction_type": "send",
-                                        "created_at": new Date(),
-                                        "coin_id": coinData.id,
-                                        "transaction_id": getTransactionDetails.txid,
-                                        "faldax_fee": faldax_fee,
-                                        "network_fees": -(getTransactionDetails.fee),
-                                        "user_id": walletData.user_id
-                                    });
-                                var walletBalance = await WalletModel
-                                    .query()
-                                    .first()
                                     .where("deleted_at", null)
                                     .andWhere("coin_id", coinData.id)
                                     .andWhere("is_admin", true)
                                     .andWhere("user_id", 36)
-                                    .orderBy('id', 'DESC')
+                                    .patch({
+                                        "balance": parseFloat(walletBalance.balance) + parseFloat(faldax_fee),
+                                        "placed_balance": parseFloat(walletBalance.placed_balance) + parseFloat(faldax_fee)
+                                    });
+                            }
 
-                                if (walletBalance != undefined) {
-                                    var updateWalletBalance = await WalletModel
-                                        .query()
-                                        .where("deleted_at", null)
-                                        .andWhere("coin_id", coinData.id)
-                                        .andWhere("is_admin", true)
-                                        .andWhere("user_id", 36)
-                                        .patch({
-                                            "balance": parseFloat(walletBalance.balance) + parseFloat(faldax_fee),
-                                            "placed_balance": parseFloat(walletBalance.placed_balance) + parseFloat(faldax_fee)
-                                        });
-                                }
-
-                                var walletValueBalance = await WalletModel
+                            var walletValueBalance = await WalletModel
+                                .query()
+                                .first()
+                                .where("deleted_at", null)
+                                .andWhere("coin_id", coinData.id)
+                                .andWhere("wallet_id", "warm_wallet")
+                                .orderBy('id', 'DESC')
+                            if (walletValueBalance != undefined) {
+                                var updateValueBalance = await WalletModel
                                     .query()
-                                    .first()
                                     .where("deleted_at", null)
                                     .andWhere("coin_id", coinData.id)
                                     .andWhere("wallet_id", "warm_wallet")
-                                    .orderBy('id', 'DESC')
-                                if (walletValueBalance != undefined) {
-                                    var updateValueBalance = await WalletModel
-                                        .query()
-                                        .where("deleted_at", null)
-                                        .andWhere("coin_id", coinData.id)
-                                        .andWhere("wallet_id", "warm_wallet")
-                                        .patch({
-                                            "balance": parseFloat(walletValueBalance.balance) + parseFloat(balanceUpdate),
-                                            "placed_balance": parseFloat(walletValueBalance.placed_balance) + parseFloat(balanceUpdate)
-                                        });
-                                }
+                                    .patch({
+                                        "balance": parseFloat(walletValueBalance.balance) + parseFloat(balanceUpdate),
+                                        "placed_balance": parseFloat(walletValueBalance.placed_balance) + parseFloat(balanceUpdate)
+                                    });
                             }
-
-                            return res
-                                .status(200)
-                                .json({
-                                    "status": 200,
-                                    "message": "Send Coins successfully."
-                                })
-                        } else {
-                            return res
-                                .status(201)
-                                .json({
-                                    "status": 201,
-                                    "message": "Insufficient Balance in the wallet"
-                                })
                         }
+
+                        return res
+                            .status(200)
+                            .json({
+                                "status": 200,
+                                "message": "Send Coins successfully."
+                            })
                     } else {
                         return res
                             .status(201)
                             .json({
                                 "status": 201,
-                                "message": "Insufficient Actual Balance in the wallet"
+                                "message": "Insufficient Balance in the wallet"
                             })
                     }
+                    // } else {
+                    //     return res
+                    //         .status(201)
+                    //         .json({
+                    //             "status": 201,
+                    //             "message": "Insufficient Actual Balance in the wallet"
+                    //         })
+                    // }
                 } else {
                     return res
                         .status(400)
