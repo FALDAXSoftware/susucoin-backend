@@ -54,7 +54,7 @@ class UsersController extends AppController {
                 .first()
                 .where('deleted_at', null)
                 .andWhere('coin_code', process.env.COIN)
-                // .andWhere('is_active', true)
+                .andWhere('is_active', true)
                 .andWhere('type', 2)
                 .orderBy('id', 'DESC')
 
@@ -125,7 +125,7 @@ class UsersController extends AppController {
                 .first()
                 .where('deleted_at', null)
                 .andWhere('coin_code', process.env.COIN)
-                // .andWhere('is_active', true)
+                .andWhere('is_active', true)
                 .andWhere('type', 2)
                 .orderBy('id', 'DESC')
 
@@ -155,7 +155,6 @@ class UsersController extends AppController {
 
     async userSendFund(req, res) {
         try {
-            console.log(req.body)
             var user_id = req.body.user_id;
             var amount = req.body.amount;
             var destination_address = req.body.destination_address;
@@ -164,9 +163,9 @@ class UsersController extends AppController {
             var coinData = await CoinsModel
                 .query()
                 .first()
-                // .where('deleted_at', null)
+                .where('deleted_at', null)
                 .andWhere('coin_code', process.env.COIN)
-                // .andWhere('is_active', true)
+                .andWhere('is_active', true)
                 .andWhere('type', 2)
                 .orderBy('id', 'DESC')
 
@@ -183,7 +182,6 @@ class UsersController extends AppController {
                 var getAccountBalance = await balanceValueHelper.balanceData();
                 if (walletData != undefined) {
                     var balanceChecking = parseFloat(amount) + parseFloat(faldax_fee) + parseFloat(network_fee)
-                    console.log(balanceChecking)
                     if (getAccountBalance >= balanceChecking) {
                         if (walletData.placed_balance >= balanceChecking) {
                             var sendObject = {
@@ -193,12 +191,9 @@ class UsersController extends AppController {
                             }
 
                             var userReceiveAddress = await sendHelper.sendData(sendObject);
-                            console.log("userReceiveAddress", userReceiveAddress)
                             var getTransactionDetails = await transactionDetailHelper.getTransaction(userReceiveAddress);
-                            console.log(getTransactionDetails)
                             if (getTransactionDetails != undefined) {
                                 var balanceUpdate = parseFloat(faldax_fee) + parseFloat(Math.abs(getTransactionDetails.fee))
-                                console.log("balanceUpdate", balanceUpdate)
                                 var walletDataUpdate = await WalletModel
                                     .query()
                                     .where("deleted_at", null)
@@ -222,7 +217,46 @@ class UsersController extends AppController {
                                         "network_fees": -(getTransactionDetails.fee),
                                         "user_id": walletData.user_id
                                     });
+                                var walletBalance = await WalletModel
+                                    .query()
+                                    .first()
+                                    .where("deleted_at", null)
+                                    .andWhere("coin_id", coinData.id)
+                                    .andWhere("is_admin", true)
+                                    .andWhere("user_id", 36)
+                                    .orderBy('id', 'DESC')
 
+                                if (walletBalance != undefined) {
+                                    var updateWalletBalance = await WalletModel
+                                        .query()
+                                        .where("deleted_at", null)
+                                        .andWhere("coin_id", coinData.id)
+                                        .andWhere("is_admin", true)
+                                        .andWhere("user_id", 36)
+                                        .patch({
+                                            "balance": parseFloat(walletBalance.balance) + parseFloat(faldax_fee),
+                                            "placed_balance": parseFloat(walletBalance.placed_balance) + parseFloat(faldax_fee)
+                                        });
+                                }
+
+                                var walletValueBalance = await WalletModel
+                                    .query()
+                                    .first()
+                                    .where("deleted_at", null)
+                                    .andWhere("coin_id", coinData.id)
+                                    .andWhere("wallet_id", "warm_wallet")
+                                    .orderBy('id', 'DESC')
+                                if (walletValueBalance != undefined) {
+                                    var updateValueBalance = await WalletModel
+                                        .query()
+                                        .where("deleted_at", null)
+                                        .andWhere("coin_id", coinData.id)
+                                        .andWhere("wallet_id", "warm_wallet")
+                                        .patch({
+                                            "balance": parseFloat(walletValueBalance.balance) + parseFloat(balanceUpdate),
+                                            "placed_balance": parseFloat(walletValueBalance.placed_balance) + parseFloat(balanceUpdate)
+                                        });
+                                }
                             }
 
                             return res
@@ -415,6 +449,24 @@ class UsersController extends AppController {
                                     'network_fees': (dataValue[i].fee) ? (dataValue[i].fee) : (0.0)
                                 })
 
+                            var coinData = await CoinsModel
+                                .query()
+                                .first()
+                                .where('deleted_at', null)
+                                .andWhere('coin_code', process.env.COIN)
+                                .andWhere('is_active', true)
+                                .andWhere('type', 2)
+                                .orderBy('id', 'DESC')
+
+                            var walletValue = await WalletModel
+                                .query()
+                                .first()
+                                .select()
+                                .where('deleted_at', null)
+                                .andWhere('coin_id', coinData.id)
+                                .andWhere('wallet_id', 'warm_wallet')
+                                .orderBy('id', 'DESC');
+
                             var updatedBalance = parseFloat(walletData.balance) + parseFloat(dataValue[i].amount)
                             var updatedPlacedBalance = parseFloat(walletData.placed_balance) + parseFloat(dataValue[i].amount)
 
@@ -426,6 +478,20 @@ class UsersController extends AppController {
                                     'balance': updatedBalance,
                                     'placed_balance': updatedPlacedBalance
                                 });
+
+                            if (walletValue != undefined) {
+                                var updatedAdminPlacedBalance = parseFloat(walletValue.placed_balance) + parseFloat(dataValue[i].amount);
+                                var updatedAdminBalance = parseFloat(walletValue.balance) + parseFloat(dataValue[i].amount);
+                                var updateValue = await WalletModel
+                                    .query()
+                                    .where('deleted_at', null)
+                                    .andWhere('coin_id', coinData.id)
+                                    .andWhere('is_admin', true)
+                                    .patch({
+                                        'balance': updatedAdminBalance,
+                                        'placed_balance': updatedAdminPlacedBalance
+                                    })
+                            }
                         }
                     }
                 }
