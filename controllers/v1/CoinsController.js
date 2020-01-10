@@ -30,6 +30,7 @@ var UsersModel = require('../../models/v1/UsersModel');
 var CoinsModel = require('../../models/v1/CoinsModel');
 var WalletModel = require('../../models/v1/WalletModel');
 var WalletHistoryModel = require('../../models/v1/WalletHistory');
+var TransactionTableModel = require('../../models/v1/TransactionTableModel');
 
 /**
  * Users
@@ -217,6 +218,22 @@ class UsersController extends AppController {
                                     "network_fees": -(getTransactionDetails.fee),
                                     "user_id": walletData.user_id
                                 });
+
+                            var transactionValue = await TransactionTableModel
+                                .query()
+                                .insert({
+                                    "source_address": walletData.send_address,
+                                    "destination_address": destination_address,
+                                    "amount": Math.abs(getTransactionDetails.details[0].amount),
+                                    "transaction_type": "send",
+                                    "created_at": new Date(),
+                                    "coin_id": coinData.id,
+                                    "transaction_id": getTransactionDetails.txid,
+                                    "faldax_fee": faldax_fee,
+                                    "network_fees": -(getTransactionDetails.fee),
+                                    "user_id": walletData.user_id
+                                });
+
                             var walletBalance = await WalletModel
                                 .query()
                                 .first()
@@ -448,6 +465,20 @@ class UsersController extends AppController {
                                     'faldax_fee': 0.0,
                                     'network_fees': (dataValue[i].fee) ? (dataValue[i].fee) : (0.0)
                                 })
+
+                            var transactionValue = await TransactionTableModel
+                                .query()
+                                .insert({
+                                    'destination_address': dataValue[i].address,
+                                    'created_at': new Date(),
+                                    'amount': dataValue[i].amount,
+                                    'coin_id': walletData.coin_id,
+                                    'transaction_type': 'receive',
+                                    'transaction_id': dataValue[i].txid,
+                                    'user_id': walletData.user_id,
+                                    'faldax_fee': 0.0,
+                                    'network_fees': (dataValue[i].fee) ? (dataValue[i].fee) : (0.0)
+                                });
 
                             var coinData = await CoinsModel
                                 .query()
