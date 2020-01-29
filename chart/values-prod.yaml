@@ -5,7 +5,7 @@
 replicaCount: 1
 
 image:
-  repository: 100.69.158.196/backend
+  repository: 100.69.158.196/susucoin
   pullPolicy: Always
 
 nameOverride: ""
