@@ -1,3 +1,6 @@
-# SusuCoin-NodeJs
+# Project Name
 
-SUSU coin setup for internal trading using express as micro service
+#Features :  <br/>
+1. PostGres Database <br/>
+2. Multilanguage <br/>
+3. Versioning <br/>
