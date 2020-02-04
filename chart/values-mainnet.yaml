@@ -11,7 +11,7 @@ image:
 nameOverride: ""
 fullnameOverride: ""
 
-nodeport: 3009
+nodeport: 3010
 
 configuration:
   pod_directory: /usr/share/nginx/html/conf
