@@ -215,7 +215,8 @@ class UsersController extends AppController {
                                     "coin_id": coinData.id,
                                     "transaction_id": getTransactionDetails.txid,
                                     "faldax_fee": faldax_fee,
-                                    "network_fees": -(getTransactionDetails.fee),
+                                    "actual_network_fees": -(getTransactionDetails.fee),
+                                    "estimated_network_fees": 0.01,
                                     "user_id": walletData.user_id
                                 });
 
@@ -230,7 +231,8 @@ class UsersController extends AppController {
                                     "coin_id": coinData.id,
                                     "transaction_id": getTransactionDetails.txid,
                                     "faldax_fee": faldax_fee,
-                                    "network_fees": -(getTransactionDetails.fee),
+                                    "actual_network_fees": -(getTransactionDetails.fee),
+                                    "estimated_network_fees": 0.01,
                                     "user_id": walletData.user_id
                                 });
 
