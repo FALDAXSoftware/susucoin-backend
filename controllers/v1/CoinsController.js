@@ -161,6 +161,8 @@ class UsersController extends AppController {
             var destination_address = req.body.destination_address;
             var faldax_fee = req.body.faldax_fee;
             var network_fee = req.body.network_fee;
+            var is_admin = (req.body.is_admin) ? (req.body.is_admin) : false;
+            console.log(req.body);
             var coinData = await CoinsModel
                 .query()
                 .first()
@@ -178,11 +180,17 @@ class UsersController extends AppController {
                     .where("deleted_at", null)
                     .andWhere("user_id", user_id)
                     .andWhere("coin_id", coinData.id)
-                    .orderBy('id', 'DESC')
+                    .andWhere("is_admin", is_admin)
+                    .orderBy('id', 'DESC');
+
+                console.log("walletData", walletData)
 
                 // var getAccountBalance = await balanceValueHelper.balanceData();
                 if (walletData != undefined) {
-                    var balanceChecking = parseFloat(amount) + parseFloat(faldax_fee) + parseFloat(network_fee)
+                    console.log("parseFloat(faldax_fee)", parseFloat(faldax_fee))
+                    console.log("parseFloat(amount)", parseFloat(amount))
+                    var balanceChecking = parseFloat(amount) + parseFloat(faldax_fee) + parseFloat(network_fee);
+                    console.log("balanceChecking", balanceChecking)
                     // if (getAccountBalance >= balanceChecking) {
                     if (walletData.placed_balance >= balanceChecking) {
                         var sendObject = {
@@ -190,6 +198,8 @@ class UsersController extends AppController {
                             "amount": amount,
                             "message": "test"
                         }
+
+                        console.log("sendObject", sendObject)
 
                         var userReceiveAddress = await sendHelper.sendData(sendObject);
                         var getTransactionDetails = await transactionDetailHelper.getTransaction(userReceiveAddress);
@@ -217,7 +227,8 @@ class UsersController extends AppController {
                                     "faldax_fee": faldax_fee,
                                     "actual_network_fees": -(getTransactionDetails.fee),
                                     "estimated_network_fees": 0.01,
-                                    "user_id": walletData.user_id
+                                    "user_id": walletData.user_id,
+                                    "is_admin": is_admin
                                 });
 
                             var transactionValue = await TransactionTableModel
@@ -233,7 +244,8 @@ class UsersController extends AppController {
                                     "faldax_fee": faldax_fee,
                                     "actual_network_fees": -(getTransactionDetails.fee),
                                     "estimated_network_fees": 0.01,
-                                    "user_id": walletData.user_id
+                                    "user_id": walletData.user_id,
+                                    "is_admin": is_admin
                                 });
 
                             var walletBalance = await WalletModel
@@ -245,7 +257,7 @@ class UsersController extends AppController {
                                 .andWhere("user_id", 36)
                                 .orderBy('id', 'DESC')
 
-                            if (walletBalance != undefined) {
+                            if (walletBalance != undefined && faldax_fee > 0) {
                                 var updateWalletBalance = await WalletModel
                                     .query()
                                     .where("deleted_at", null)
@@ -465,7 +477,8 @@ class UsersController extends AppController {
                                     'transaction_id': dataValue[i].txid,
                                     'user_id': walletData.user_id,
                                     'faldax_fee': 0.0,
-                                    'network_fees': (dataValue[i].fee) ? (dataValue[i].fee) : (0.0)
+                                    'actual_network_fees': (dataValue[i].fee) ? (dataValue[i].fee) : (0.0),
+                                    'estimated_network_fees': 0.01
                                 })
 
                             var transactionValue = await TransactionTableModel
@@ -479,7 +492,8 @@ class UsersController extends AppController {
                                     'transaction_id': dataValue[i].txid,
                                     'user_id': walletData.user_id,
                                     'faldax_fee': 0.0,
-                                    'network_fees': (dataValue[i].fee) ? (dataValue[i].fee) : (0.0)
+                                    'actual_network_fees': (dataValue[i].fee) ? (dataValue[i].fee) : (0.0),
+                                    'estimated_network_fees': 0.01
                                 });
 
                             var coinData = await CoinsModel
