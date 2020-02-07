@@ -283,7 +283,8 @@ class UsersController extends AppController {
                                 .andWhere("user_id", 36)
                                 .orderBy('id', 'DESC')
 
-                            if (walletBalance != undefined && faldax_fee > 0) {
+                            if (walletBalance != undefined) {
+                                var amountToBeAdded = parseFloat(residual_value) + parseFloat(faldax_fee)
                                 var updateWalletBalance = await WalletModel
                                     .query()
                                     .where("deleted_at", null)
@@ -291,9 +292,27 @@ class UsersController extends AppController {
                                     .andWhere("is_admin", true)
                                     .andWhere("user_id", 36)
                                     .patch({
-                                        "balance": parseFloat(walletBalance.balance) + parseFloat(faldax_fee),
-                                        "placed_balance": parseFloat(walletBalance.placed_balance) + parseFloat(faldax_fee)
+                                        "balance": parseFloat(walletBalance.balance) + parseFloat(amountToBeAdded),
+                                        "placed_balance": parseFloat(walletBalance.placed_balance) + parseFloat(amountToBeAdded)
                                     });
+
+                                var walletHistoryValue = await WalletHistoryModel
+                                    .query()
+                                    .insert({
+                                        "source_address": walletData.send_address,
+                                        "destination_address": walletBalance.receive_address,
+                                        "amount": parseFloat(amountToBeAdded).toFixed(8),
+                                        "actual_amount": amount,
+                                        "transaction_type": "send",
+                                        "created_at": new Date(),
+                                        "coin_id": coinData.id,
+                                        "transaction_id": getTransactionDetails.txid,
+                                        "faldax_fee": faldax_fee,
+                                        "actual_network_fees": 0.0,
+                                        "estimated_network_fees": 0.0,
+                                        "user_id": 36,
+                                        "is_admin": true
+                                    })
                             }
 
                             var walletValueBalance = await WalletModel
@@ -312,6 +331,25 @@ class UsersController extends AppController {
                                     .patch({
                                         "balance": parseFloat(walletValueBalance.balance) + parseFloat(balanceUpdate),
                                         "placed_balance": parseFloat(walletValueBalance.placed_balance) + parseFloat(balanceUpdate)
+                                    });
+                                var transactionValue = await TransactionTableModel
+                                    .query()
+                                    .insert({
+                                        "source_address": walletData.send_address,
+                                        "destination_address": destination_address,
+                                        "amount": balanceChecking,
+                                        "actual_amount": amount,
+                                        "transaction_type": "send",
+                                        "created_at": new Date(),
+                                        "coin_id": coinData.id,
+                                        "transaction_id": getTransactionDetails.txid,
+                                        "faldax_fee": faldax_fee,
+                                        "actual_network_fees": -(getTransactionDetails.fee),
+                                        "estimated_network_fees": 0.01,
+                                        "residual_amount": residual_value,
+                                        "transaction_from": "Warmwallet to Send",
+                                        "user_id": walletData.user_id,
+                                        "is_admin": is_admin
                                     });
                             }
                         }
