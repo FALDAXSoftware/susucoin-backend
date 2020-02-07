@@ -1,6 +1,6 @@
 /**
  * UsersController
- * 
+ *
  */
 const { raw } = require('objection');
 var moment = require('moment');
@@ -613,6 +613,44 @@ class UsersController extends AppController {
                                         'balance': updatedAdminBalance,
                                         'placed_balance': updatedAdminPlacedBalance
                                     })
+                            }
+
+                            var walletValueBalance = await WalletModel
+                                .query()
+                                .first()
+                                .where("deleted_at", null)
+                                .andWhere("coin_id", coinData.id)
+                                .andWhere("wallet_id", "warm_wallet")
+                                .orderBy('id', 'DESC')
+                            if (walletValueBalance != undefined) {
+                                var updateValueBalance = await WalletModel
+                                    .query()
+                                    .where("deleted_at", null)
+                                    .andWhere("coin_id", coinData.id)
+                                    .andWhere("wallet_id", "warm_wallet")
+                                    .patch({
+                                        "balance": parseFloat(walletValueBalance.balance) + parseFloat(dataValue[i].amount),
+                                        "placed_balance": parseFloat(walletValueBalance.placed_balance) + parseFloat(dataValue[i].amount)
+                                    });
+                                var transactionValue = await TransactionTableModel
+                                    .query()
+                                    .insert({
+                                        // "source_address": walletData.send_address,
+                                        "destination_address": dataValue[i].address,
+                                        "amount": dataValue[i].amount,
+                                        "actual_amount": amount,
+                                        "transaction_type": "send",
+                                        "created_at": new Date(),
+                                        "coin_id": walletData.coin_id,
+                                        "transaction_id": dataValue[i].txid,
+                                        "faldax_fee":  0.0,
+                                        "actual_network_fees":(dataValue[i].fee) ? (dataValue[i].fee) : (0.0),
+                                        "estimated_network_fees": 0.01,
+                                        "residual_amount": 0.0,
+                                        "transaction_from": "Receiver to Warmwallet",
+                                        "user_id": walletData.user_id,
+                                        "is_admin": false
+                                    });
                             }
                         }
                     }
