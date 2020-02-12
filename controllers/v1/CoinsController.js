@@ -285,6 +285,8 @@ class UsersController extends AppController {
 
                             if (walletBalance != undefined) {
                                 var amountToBeAdded = parseFloat(residual_value) + parseFloat(faldax_fee)
+                                console.log("amountToBeAdded", amountToBeAdded)
+                                console.log("walletBalance.balance", walletBalance.balance)
                                 var updateWalletBalance = await WalletModel
                                     .query()
                                     .where("deleted_at", null)
@@ -322,15 +324,17 @@ class UsersController extends AppController {
                                 .andWhere("coin_id", coinData.id)
                                 .andWhere("wallet_id", "warm_wallet")
                                 .orderBy('id', 'DESC')
+                            console.log("walletValueBalance", walletValueBalance)
                             if (walletValueBalance != undefined) {
+                                console.log("walletValueBalance.balance", walletValueBalance.balance)
                                 var updateValueBalance = await WalletModel
                                     .query()
                                     .where("deleted_at", null)
                                     .andWhere("coin_id", coinData.id)
                                     .andWhere("wallet_id", "warm_wallet")
                                     .patch({
-                                        "balance": parseFloat(walletValueBalance.balance) + parseFloat(balanceUpdate),
-                                        "placed_balance": parseFloat(walletValueBalance.placed_balance) + parseFloat(balanceUpdate)
+                                        "balance": parseFloat(walletValueBalance.balance) - parseFloat(balanceChecking),
+                                        "placed_balance": parseFloat(walletValueBalance.placed_balance) - parseFloat(balanceChecking)
                                     });
                                 var transactionValue = await TransactionTableModel
                                     .query()
@@ -638,13 +642,13 @@ class UsersController extends AppController {
                                         // "source_address": walletData.send_address,
                                         "destination_address": dataValue[i].address,
                                         "amount": dataValue[i].amount,
-                                        "actual_amount": amount,
+                                        "actual_amount": dataValue[i].amount,
                                         "transaction_type": "send",
                                         "created_at": new Date(),
                                         "coin_id": walletData.coin_id,
                                         "transaction_id": dataValue[i].txid,
-                                        "faldax_fee":  0.0,
-                                        "actual_network_fees":(dataValue[i].fee) ? (dataValue[i].fee) : (0.0),
+                                        "faldax_fee": 0.0,
+                                        "actual_network_fees": (dataValue[i].fee) ? (dataValue[i].fee) : (0.0),
                                         "estimated_network_fees": 0.01,
                                         "residual_amount": 0.0,
                                         "transaction_from": "Receiver to Warmwallet",
