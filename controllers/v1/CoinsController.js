@@ -21,6 +21,8 @@ var transactionHelper = require("../../helpers/get-wallet-balance");
 var transactionDetailHelper = require("../../helpers/get-transaction");
 var listTransactionHelper = require("../../helpers/list-transaction")
 var balanceValueHelper = require("../../helpers/get-balance");
+var getRawTransaction = require("../../helpers/get-raw-transaction");
+var decodeRawTransaction = require("../../helpers/decode-raw-transaction");
 var currencyConversionHelper = require("../../helpers/get-currency-conversion");
 const constants = require('../../config/constants');
 // Controllers
@@ -516,145 +518,165 @@ class UsersController extends AppController {
                     flagValue == true;
                     return 1;
                 } else if (dataValue[i].category == "receive") {
-                    var walletHistoryData = await WalletHistoryModel
-                        .query()
-                        .first()
-                        .where('deleted_at', null)
-                        .andWhere('transaction_id', dataValue[i].txid)
-                        .andWhere('transaction_type', 'receive')
-                        .orderBy('id', 'DESC');
-
-                    if (walletHistoryData == undefined) {
-                        var walletData = await WalletModel
+                    var dataTransaction = await getRawTransaction.getTransaction(dataValue[i].txid)
+                    console.log(dataTransaction)
+                    var dataTransactionValue = await decodeRawTransaction.getTransaction(dataTransaction);
+                    if (dataTransactionValue != null) {
+                        console.log("dataTransactionValue", dataTransactionValue);
+                        var sourcxeAddressValue = (dataTransactionValue['vout'])
+                        console.log("Full source", dataTransactionValue['vout'])
+                        // console.log("sourcxeAddressValue", JSON.parse(dataTransactionValue['vout'][0]))
+                        var valiueIm = (dataTransactionValue['vout']);
+                        sourcxeAddressValue = valiueIm[0]['scriptPubKey']['addresses'][0]
+                        console.log("sourcxeAddressValue", sourcxeAddressValue)
+                        var walletHistoryData = await WalletHistoryModel
                             .query()
                             .first()
-                            .select()
-                            .where('receive_address', dataValue[i].address)
-                            .andWhere('deleted_at', null)
+                            .where('deleted_at', null)
+                            .andWhere('transaction_id', dataValue[i].txid)
+                            .andWhere('transaction_type', 'receive')
                             .orderBy('id', 'DESC');
+                        console.log("walletHistoryData", walletHistoryData);
 
-                        if (walletData != undefined) {
-                            var walletHistoryData = await WalletHistoryModel
-                                .query()
-                                .insert({
-                                    'destination_address': dataValue[i].address,
-                                    'created_at': new Date(),
-                                    'amount': dataValue[i].amount,
-                                    "actual_amount": dataValue[i].amount,
-                                    'coin_id': walletData.coin_id,
-                                    'transaction_type': 'receive',
-                                    'transaction_id': dataValue[i].txid,
-                                    'user_id': walletData.user_id,
-                                    'faldax_fee': 0.0,
-                                    'actual_network_fees': (dataValue[i].fee) ? (dataValue[i].fee) : (0.0),
-                                    'estimated_network_fees': 0.01,
-                                    "faldax_fee": 0.0,
-                                    "residual_amount": 0.0,
-                                    "user_id": walletData.user_id,
-                                    "is_admin": false
-                                })
-
-                            var transactionValue = await TransactionTableModel
-                                .query()
-                                .insert({
-                                    'destination_address': dataValue[i].address,
-                                    'created_at': new Date(),
-                                    'amount': dataValue[i].amount,
-                                    "actual_amount": dataValue[i].amount,
-                                    'coin_id': walletData.coin_id,
-                                    'transaction_type': 'receive',
-                                    'transaction_id': dataValue[i].txid,
-                                    'user_id': walletData.user_id,
-                                    'faldax_fee': 0.0,
-                                    'actual_network_fees': (dataValue[i].fee) ? (dataValue[i].fee) : (0.0),
-                                    'estimated_network_fees': 0.01,
-                                    "faldax_fee": 0.0,
-                                    "residual_amount": 0.0,
-                                    "transaction_from": "Destination To Receive",
-                                    "user_id": walletData.user_id,
-                                    "is_admin": false
-                                });
-
-                            var coinData = await CoinsModel
-                                .query()
-                                .first()
-                                .where('deleted_at', null)
-                                .andWhere('coin_code', process.env.COIN)
-                                .andWhere('is_active', true)
-                                .andWhere('type', 2)
-                                .orderBy('id', 'DESC')
-
-                            var walletValue = await WalletModel
+                        if (walletHistoryData == undefined) {
+                            // console.log("sourcxeAddressValue", sourcxeAddressValue)
+                            var walletData = await WalletModel
                                 .query()
                                 .first()
                                 .select()
-                                .where('deleted_at', null)
-                                .andWhere('coin_id', coinData.id)
-                                .andWhere('wallet_id', 'warm_wallet')
-                                .orderBy('id', 'DESC');
-
-                            var updatedBalance = parseFloat(walletData.balance) + parseFloat(dataValue[i].amount)
-                            var updatedPlacedBalance = parseFloat(walletData.placed_balance) + parseFloat(dataValue[i].amount)
-
-                            var balanceData = await WalletModel
-                                .query()
                                 .where('receive_address', dataValue[i].address)
                                 .andWhere('deleted_at', null)
-                                .patch({
-                                    'balance': updatedBalance,
-                                    'placed_balance': updatedPlacedBalance
-                                });
+                                .orderBy('id', 'DESC');
 
-                            if (walletValue != undefined) {
-                                var updatedAdminPlacedBalance = parseFloat(walletValue.placed_balance) + parseFloat(dataValue[i].amount);
-                                var updatedAdminBalance = parseFloat(walletValue.balance) + parseFloat(dataValue[i].amount);
-                                var updateValue = await WalletModel
+                            console.log("walletData", walletData);
+
+                            if (walletData != undefined) {
+                                console.log("In sourcxeAddressValue", sourcxeAddressValue)
+                                var walletHistoryData = await WalletHistoryModel
                                     .query()
-                                    .where('deleted_at', null)
-                                    .andWhere('coin_id', coinData.id)
-                                    .andWhere('is_admin', true)
-                                    .patch({
-                                        'balance': updatedAdminBalance,
-                                        'placed_balance': updatedAdminPlacedBalance
+                                    .insert({
+                                        'destination_address': dataValue[i].address,
+                                        'source_address': sourcxeAddressValue,
+                                        'created_at': new Date(),
+                                        'amount': dataValue[i].amount,
+                                        "actual_amount": dataValue[i].amount,
+                                        'coin_id': walletData.coin_id,
+                                        'transaction_type': 'receive',
+                                        'transaction_id': dataValue[i].txid,
+                                        'user_id': walletData.user_id,
+                                        'faldax_fee': 0.0,
+                                        'actual_network_fees': (dataValue[i].fee) ? (dataValue[i].fee) : (0.0),
+                                        'estimated_network_fees': 0.01,
+                                        "faldax_fee": 0.0,
+                                        "residual_amount": 0.0,
+                                        "user_id": walletData.user_id,
+                                        "is_admin": false
                                     })
-                            }
 
-                            var walletValueBalance = await WalletModel
-                                .query()
-                                .first()
-                                .where("deleted_at", null)
-                                .andWhere("coin_id", coinData.id)
-                                .andWhere("wallet_id", "warm_wallet")
-                                .orderBy('id', 'DESC')
-                            if (walletValueBalance != undefined) {
-                                var updateValueBalance = await WalletModel
-                                    .query()
-                                    .where("deleted_at", null)
-                                    .andWhere("coin_id", coinData.id)
-                                    .andWhere("wallet_id", "warm_wallet")
-                                    .patch({
-                                        "balance": parseFloat(walletValueBalance.balance) + parseFloat(dataValue[i].amount),
-                                        "placed_balance": parseFloat(walletValueBalance.placed_balance) + parseFloat(dataValue[i].amount)
-                                    });
                                 var transactionValue = await TransactionTableModel
                                     .query()
                                     .insert({
-                                        // "source_address": walletData.send_address,
-                                        "destination_address": dataValue[i].address,
-                                        "amount": dataValue[i].amount,
+                                        'destination_address': dataValue[i].address,
+                                        'source_address': sourcxeAddressValue,
+                                        'created_at': new Date(),
+                                        'amount': dataValue[i].amount,
                                         "actual_amount": dataValue[i].amount,
-                                        "transaction_type": "receive",
-                                        "created_at": new Date(),
-                                        "coin_id": walletData.coin_id,
-                                        "transaction_id": dataValue[i].txid,
+                                        'coin_id': walletData.coin_id,
+                                        'transaction_type': 'receive',
+                                        'transaction_id': dataValue[i].txid,
+                                        'user_id': walletData.user_id,
+                                        'faldax_fee': 0.0,
+                                        'actual_network_fees': (dataValue[i].fee) ? (dataValue[i].fee) : (0.0),
+                                        'estimated_network_fees': 0.01,
                                         "faldax_fee": 0.0,
-                                        "actual_network_fees": (dataValue[i].fee) ? (dataValue[i].fee) : (0.0),
-                                        "estimated_network_fees": 0.01,
                                         "residual_amount": 0.0,
-                                        "transaction_from": "Receiver to Warmwallet",
+                                        "transaction_from": "Destination To Receive",
                                         "user_id": walletData.user_id,
                                         "is_admin": false
                                     });
+
+                                var coinData = await CoinsModel
+                                    .query()
+                                    .first()
+                                    .where('deleted_at', null)
+                                    .andWhere('coin_code', process.env.COIN)
+                                    .andWhere('is_active', true)
+                                    .andWhere('type', 2)
+                                    .orderBy('id', 'DESC')
+
+                                var walletValue = await WalletModel
+                                    .query()
+                                    .first()
+                                    .select()
+                                    .where('deleted_at', null)
+                                    .andWhere('coin_id', coinData.id)
+                                    .andWhere('wallet_id', 'warm_wallet')
+                                    .orderBy('id', 'DESC');
+
+                                var updatedBalance = parseFloat(walletData.balance) + parseFloat(dataValue[i].amount)
+                                var updatedPlacedBalance = parseFloat(walletData.placed_balance) + parseFloat(dataValue[i].amount)
+
+                                var balanceData = await WalletModel
+                                    .query()
+                                    .where('receive_address', dataValue[i].address)
+                                    .andWhere('deleted_at', null)
+                                    .patch({
+                                        'balance': updatedBalance,
+                                        'placed_balance': updatedPlacedBalance
+                                    });
+
+                                if (walletValue != undefined) {
+                                    var updatedAdminPlacedBalance = parseFloat(walletValue.placed_balance) + parseFloat(dataValue[i].amount);
+                                    var updatedAdminBalance = parseFloat(walletValue.balance) + parseFloat(dataValue[i].amount);
+                                    var updateValue = await WalletModel
+                                        .query()
+                                        .where('deleted_at', null)
+                                        .andWhere('coin_id', coinData.id)
+                                        .andWhere('is_admin', true)
+                                        .patch({
+                                            'balance': updatedAdminBalance,
+                                            'placed_balance': updatedAdminPlacedBalance
+                                        })
+                                }
+
+                                var walletValueBalance = await WalletModel
+                                    .query()
+                                    .first()
+                                    .where("deleted_at", null)
+                                    .andWhere("coin_id", coinData.id)
+                                    .andWhere("wallet_id", "warm_wallet")
+                                    .orderBy('id', 'DESC')
+                                if (walletValueBalance != undefined) {
+                                    var updateValueBalance = await WalletModel
+                                        .query()
+                                        .where("deleted_at", null)
+                                        .andWhere("coin_id", coinData.id)
+                                        .andWhere("wallet_id", "warm_wallet")
+                                        .patch({
+                                            "balance": parseFloat(walletValueBalance.balance) + parseFloat(dataValue[i].amount),
+                                            "placed_balance": parseFloat(walletValueBalance.placed_balance) + parseFloat(dataValue[i].amount)
+                                        });
+                                    var transactionValue = await TransactionTableModel
+                                        .query()
+                                        .insert({
+                                            // "source_address": walletData.send_address,
+                                            "destination_address": dataValue[i].address,
+                                            'source_address': sourcxeAddressValue,
+                                            "amount": dataValue[i].amount,
+                                            "actual_amount": dataValue[i].amount,
+                                            "transaction_type": "receive",
+                                            "created_at": new Date(),
+                                            "coin_id": walletData.coin_id,
+                                            "transaction_id": dataValue[i].txid,
+                                            "faldax_fee": 0.0,
+                                            "actual_network_fees": (dataValue[i].fee) ? (dataValue[i].fee) : (0.0),
+                                            "estimated_network_fees": 0.01,
+                                            "residual_amount": 0.0,
+                                            "transaction_from": "Receiver to Warmwallet",
+                                            "user_id": walletData.user_id,
+                                            "is_admin": false
+                                        });
+                                }
                             }
                         }
                     }
