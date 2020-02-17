@@ -643,7 +643,7 @@ class UsersController extends AppController {
                                         "destination_address": dataValue[i].address,
                                         "amount": dataValue[i].amount,
                                         "actual_amount": dataValue[i].amount,
-                                        "transaction_type": "send",
+                                        "transaction_type": "receive",
                                         "created_at": new Date(),
                                         "coin_id": walletData.coin_id,
                                         "transaction_id": dataValue[i].txid,
