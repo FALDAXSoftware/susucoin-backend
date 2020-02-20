@@ -468,6 +468,9 @@ class UsersController extends AppController {
                         var sourcxeAddressValue = (dataTransactionValue['vout'])
                         var valiueIm = (dataTransactionValue['vout']);
                         sourcxeAddressValue = valiueIm[0]['scriptPubKey']['addresses'][0]
+                        if (sourcxeAddressValue == dataValue[i].address) {
+                            sourcxeAddressValue = valiueIm[0]['scriptPubKey']['addresses'][1]
+                        }
                         var walletHistoryData = await WalletHistoryModel
                             .query()
                             .first()
