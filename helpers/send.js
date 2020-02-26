@@ -13,6 +13,8 @@ var sendData = async (sendInfo) => {
         'params': [sendInfo.address, sendInfo.amount, sendInfo.message]
     }
 
+    console.log(bodyData)
+
     try {
 
         await fetch(process.env.SUSU_URL, {

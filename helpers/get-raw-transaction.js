@@ -26,6 +26,7 @@ var getTransaction = async (txid) => {
         })
             .then(resData => resData.json())
             .then(resData => {
+                console.log(resData)
                 transactionDetails = resData.result;
             })
         return transactionDetails;

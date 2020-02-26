@@ -232,7 +232,7 @@ class UsersController extends AppController {
                                 .insert({
                                     "source_address": walletData.receive_address,
                                     "destination_address": destination_address,
-                                    "amount": balanceChecking,
+                                    "amount": balanceValueUpdateValue,
                                     "actual_amount": amount,
                                     "transaction_type": "send",
                                     "created_at": new Date(),
@@ -250,7 +250,7 @@ class UsersController extends AppController {
                                 .insert({
                                     "source_address": walletData.receive_address,
                                     "destination_address": destination_address,
-                                    "amount": balanceChecking,
+                                    "amount": balanceValueUpdateValue,
                                     "actual_amount": amount,
                                     "transaction_type": "send",
                                     "created_at": new Date(),
@@ -552,7 +552,8 @@ class UsersController extends AppController {
                                         "residual_amount": 0.0,
                                         "transaction_from": "Destination To Receive",
                                         "user_id": walletData.user_id,
-                                        "is_admin": false
+                                        "is_admin": false,
+                                        "receiver_user_balance_before": walletData.balance
                                     });
 
                                 var coinData = await CoinsModel
