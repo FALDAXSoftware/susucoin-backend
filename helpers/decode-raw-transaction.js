@@ -1,19 +1,18 @@
 var fetch = require('node-fetch')
 var encodeCredentials = require("./encode-auth");
 
-var sendData = async (sendInfo) => {
-    var sendedFundStatus;
+var getTransaction = async (txid) => {
+    var transactionDetails;
+
     var encodeKey = await encodeCredentials.encodeData();
 
-    //Body Data for sending funds
+    // Get new address.
     var bodyData = {
         'jsonrpc': '2.0',
         'id': '0',
-        'method': 'sendtoaddress',
-        'params': [sendInfo.address, sendInfo.amount, sendInfo.message]
+        'method': 'decoderawtransaction',
+        'params': [txid]
     }
-
-    console.log(bodyData)
 
     try {
 
@@ -27,15 +26,14 @@ var sendData = async (sendInfo) => {
         })
             .then(resData => resData.json())
             .then(resData => {
-                console.log(resData)
-                sendedFundStatus = resData.result;
+                transactionDetails = resData.result;
             })
-        return sendedFundStatus;
+        return transactionDetails;
     } catch (error) {
-        console.log("Send fund error :: ", error);
+        console.log("Balance error :: ", error);
     }
 }
 
 module.exports = {
-    sendData
+    getTransaction
 }
