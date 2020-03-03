@@ -28,7 +28,7 @@ volumes: [
               namespace = getNamespace(myRepo.GIT_BRANCH);
               if (namespace){
               withAWS(credentials:'jenkins_s3_upload') {
-                s3Download(file:'.env', bucket:'env.faldax', path:"coin-backend/susucoin/.env", force:true)
+                s3Download(file:'.env', bucket:'env.faldax', path:"coin-backend/susucoin/${namespace}/.env", force:true)
               }
               sh "ls -a"
               sh "docker build -t ${imageRepo}/susucoin:${imageTag}  ."
@@ -44,9 +44,8 @@ volumes: [
 def getNamespace(branch){
     switch(branch){
         case 'master' : return "prod";
-        case 'development' :  return "dev";
-        case 'feature-k8s-support' :  return "dev";
-        default : return null;
+        case 'mainnet' : return "mainnet";
+        default : return 'dev';
     }
 }
 
