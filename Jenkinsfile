@@ -33,6 +33,7 @@ volumes: [
               sh "ls -a"
               sh "docker build -t ${imageRepo}/susucoin:${imageTag}  ."
               sh "docker push  ${imageRepo}/susucoin:${imageTag}"
+              sh "helm init"
               sh "helm upgrade --install --namespace ${namespace} --set image.tag=${imageTag} ${namespace}-backend-susucoin -f chart/values-${namespace}.yaml chart/"
                  }
          }
