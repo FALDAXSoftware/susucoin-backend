@@ -13,7 +13,7 @@ var addressData = async () => {
     }
 
     try {
-
+        console.log(process.env.SUSU_URL)
         await fetch(process.env.SUSU_URL, {
             method: 'POST',
             body: JSON.stringify(bodyData),
@@ -24,6 +24,7 @@ var addressData = async () => {
         })
             .then(resData => resData.json())
             .then(resData => {
+                console.log(resData)
                 newAddress = resData.result;
             })
         return newAddress;
