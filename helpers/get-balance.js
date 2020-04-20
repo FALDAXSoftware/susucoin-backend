@@ -7,9 +7,9 @@ var balanceData = async () => {
 
     // Get new address.
     var bodyData = {
-        'jsonrpc': '2.0',
-        'id': '0',
-        'method': 'getbalance'
+        "jsonrpc": "2.0",
+        "id": "1",
+        "method": "getbalance"
     }
 
     try {
@@ -22,10 +22,10 @@ var balanceData = async () => {
                 'Authorization': 'Basic ' + encodeKey
             }
         })
-            .then(resData => {
-                console.log(resData)
-                resData.json()
-            })
+            // .then(resData => {
+            //     console.log(resData)
+            //     resData.json()
+            // })
             .then(resData => {
                 console.log("resData", resData)
                 balanceValue = resData.result;
