@@ -632,6 +632,22 @@ class UsersController extends AppController {
             console.log(error);
         }
     }
+
+    async getBalanceValue(req, res) {
+        try {
+            var getAccountBalance = await balanceValueHelper.balanceData();
+
+            return res
+                .status(200)
+                .json({
+                    "status": 200,
+                    "message": "User Balance has been listed successfully",
+                    "data": getAccountBalance
+                })
+        } catch (error) {
+
+        }
+    }
 }
 
 
