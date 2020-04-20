@@ -18,7 +18,6 @@ var balanceData = async () => {
     var dataValue = await new Promise(async (resolve, reject) => {
         request(options, function (error, response) {
             if (error) throw new Error(error);
-            console.log(response.body);
             var data = JSON.parse(response.body)
             resolve(data.result)
         });
