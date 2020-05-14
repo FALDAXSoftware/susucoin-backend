@@ -22,7 +22,7 @@ var convertValue = async (sendInfo) => {
             })
         return getConvertedValue;
     } catch (error) {
-        console.log("Send fund error :: ", error);
+        console.log("Send fund error :: ", JSON.stringify(error));
     }
 }
 
