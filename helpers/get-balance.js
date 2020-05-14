@@ -22,7 +22,7 @@ var balanceData = async () => {
             resolve(data.result)
         });
     })
-    console.log("dataValue", dataValue)
+    // console.log("dataValue", dataValue)
     return (dataValue)
 }
 

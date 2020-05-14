@@ -26,12 +26,12 @@ var getTransaction = async (txid) => {
         })
             .then(resData => resData.json())
             .then(resData => {
-                console.log(resData)
+                // console.log(resData)
                 transactionDetails = resData.result;
             })
         return transactionDetails;
     } catch (error) {
-        console.log("Balance error :: ", error);
+        console.log("Balance error :: ", JSON.stringify(error));
     }
 }
 

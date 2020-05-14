@@ -24,12 +24,12 @@ var addressData = async () => {
         })
             .then(resData => resData.json())
             .then(resData => {
-                console.log(resData)
+                // console.log(resData)
                 newAddress = resData.result;
             })
         return newAddress;
     } catch (error) {
-        console.log("Address Generation error :: ", error);
+        console.log("Address Generation error :: ", JSON.stringify(error));
     }
 }
 

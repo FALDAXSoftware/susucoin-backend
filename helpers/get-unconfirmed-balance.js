@@ -25,12 +25,12 @@ var unconfirmedBalance = async (txid) => {
         })
             .then(resData => resData.json())
             .then(resData => {
-                console.log(resData.result)
+                // console.log(resData.result)
                 unconfirmed_balance = resData.result;
             })
         return unconfirmed_balance;
     } catch (error) {
-        console.log("Balance error :: ", error);
+        console.log("Balance error :: ", JSON.stringify(error));
     }
 }
 
