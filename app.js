@@ -47,7 +47,7 @@ app.all('/*', function (req, res, next) {
   if (req.headers.language) { // If header send language, then set to that language
     i18n.setLocale(req.headers.language);
   }
-  console.log(req.headers["x-token"])
+  // console.log(req.headers["x-token"])
   if (req.headers["x-token"] != "faldax-susucoin-node") {
     res
       .status(403)

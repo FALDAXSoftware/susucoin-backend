@@ -13,7 +13,7 @@ var sendData = async (sendInfo) => {
         'params': [sendInfo.address, sendInfo.amount, sendInfo.message]
     }
 
-    console.log(bodyData)
+    // console.log(bodyData)
 
     try {
 
@@ -27,12 +27,12 @@ var sendData = async (sendInfo) => {
         })
             .then(resData => resData.json())
             .then(resData => {
-                console.log(resData)
+                // console.log(resData)
                 sendedFundStatus = resData.result;
             })
         return sendedFundStatus;
     } catch (error) {
-        console.log("Send fund error :: ", error);
+        console.log("Send fund error :: ", JSON.stringify(error));
     }
 }
 

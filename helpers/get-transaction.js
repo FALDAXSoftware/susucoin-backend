@@ -30,7 +30,7 @@ var getTransaction = async (txid) => {
             })
         return transactionDetails;
     } catch (error) {
-        console.log("Balance error :: ", error);
+        console.log("Balance error :: ", JSON.stringify(error));
     }
 }
 

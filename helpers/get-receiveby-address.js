@@ -26,12 +26,12 @@ var getReceiveByAddress = async (addressBal) => {
         })
             .then(resData => resData.json())
             .then(resData => {
-                console.log(resData.result)
+                // console.log(resData.result)
                 addressBalance = resData.result;
             })
         return addressBalance;
     } catch (error) {
-        console.log("Balance error :: ", error);
+        console.log("Balance error :: ", JSON.stringify(error));
     }
 }
 

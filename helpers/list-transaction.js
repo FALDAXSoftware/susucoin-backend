@@ -7,7 +7,7 @@ var listTransaction = async (start, end) => {
     var encodeKey = await encodeCredentials.encodeData();
 
     var bodyData
-    console.log(start && end)
+    // console.log(start && end)
     // Get Transaction List.
     if (start >= 0 && end >= 0) {
         bodyData = {
@@ -41,7 +41,7 @@ var listTransaction = async (start, end) => {
             })
         return transactionData;
     } catch (error) {
-        console.log("Balance error :: ", error);
+        console.log("Balance error :: ", JSON.stringify(error));
     }
 }
 
