@@ -50,6 +50,7 @@ class UsersController extends AppController {
 
     async createUserAddress(req, res) {
         try {
+            console.log(JSON.stringify(req.body));
             var user_id = req.body.user_id;
             var label = req.body.label;
             var coinData = await CoinsModel
@@ -74,6 +75,7 @@ class UsersController extends AppController {
 
                 if (walletData == undefined) {
                     var userReceiveAddress = await addressHelper.addressData();
+                    console.log(JSON.stringify(userReceiveAddress));
 
                     var dataValue = await WalletModel
                         .query()
@@ -88,6 +90,8 @@ class UsersController extends AppController {
                             "balance": 0.0,
                             "placed_balance": 0.0
                         })
+
+                    console.log(JSON.stringify(dataValue))
                     return res
                         .status(200)
                         .json({
@@ -181,6 +185,8 @@ class UsersController extends AppController {
                     .andWhere("is_admin", is_admin)
                     .orderBy('id', 'DESC');
 
+                console.log(JSON.stringify(walletData));
+
                 if (walletData != undefined) {
                     var balanceChecking = parseFloat(amount) + parseFloat(faldax_fee) + parseFloat(network_fee);
                     if (walletData.placed_balance >= balanceChecking) {
@@ -192,7 +198,7 @@ class UsersController extends AppController {
 
                         var userReceiveAddress = await sendHelper.sendData(sendObject);
                         var getTransactionDetails = await transactionDetailHelper.getTransaction(userReceiveAddress);
-                        console.log("getTransactionDetails", JSON.stringify(getTransactionDetails))
+                        console.log(JSON.stringify(getTransactionDetails))
                         if (getTransactionDetails != undefined) {
                             var realNetworkFee = parseFloat(-(getTransactionDetails.fee)).toFixed(8)
                             var balanceUpdate = parseFloat(faldax_fee) + parseFloat(Math.abs(realNetworkFee))
@@ -330,6 +336,7 @@ class UsersController extends AppController {
     // Get User Balance
     async getUserBalance(req, res) {
         try {
+            console.log("req.body", req.body)
             var address = req.body.address;
 
             var balanceValue = await balanceHelper.getReceiveByAddress(address);
@@ -349,11 +356,12 @@ class UsersController extends AppController {
     // Get User Transactions Value
     async getUserTransactions(req, res) {
         try {
+            console.log("req.body", req.body)
             var address = req.body.address;
 
             var transactionList = await transactionHelper.balanceData(address)
             var transactionDetails = [];
-            // console.log(transactionList)
+            console.log(JSON.stringify(transactionList))
             for (var i = 0; i < transactionList.length; i++) {
                 // console.log(transactionList[i])
                 var detailValue = await transactionDetailHelper.getTransaction(transactionList[i]);
@@ -381,7 +389,7 @@ class UsersController extends AppController {
     async getListTransactions(req, res) {
         try {
             var transactionList = await listTransactionHelper.listTransaction()
-            // console.log(transactionList)
+            console.log(JSON.stringify(transactionList))
             return res
                 .status(200)
                 .json({
@@ -585,13 +593,14 @@ class UsersController extends AppController {
     // Webhook for transaction history
     async returnWebhookdata() {
         try {
-            // console.log("ISNIDE METHOD")
+            console.log("ISNIDE CRON METHOD")
             var transactionHash;
             var transactionValue = await module.exports.fileValueUpdate("", 1)
             var dataValue = await listTransactionHelper.listTransaction(10, 0);
             var data = dataValue[dataValue.length - 1].txid;
             var value = await module.exports.getTransactionData(false, 10, 0, transactionValue)
             var transactionValue = await module.exports.fileValueUpdate(data, 2)
+            console.log("Webhook Done")
         } catch (error) {
             console.log(JSON.stringify(error));
         }
@@ -599,6 +608,7 @@ class UsersController extends AppController {
 
     async getEquivalentValue(req, res) {
         try {
+            console.log("CRON FOR PRICE UPDATE")
             var data = await currencyConversionHelper.convertValue();
             return res
                 .status(200)
