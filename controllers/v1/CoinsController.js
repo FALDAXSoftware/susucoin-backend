@@ -23,6 +23,7 @@ var listTransactionHelper = require("../../helpers/list-transaction")
 var balanceValueHelper = require("../../helpers/get-balance");
 var getRawTransaction = require("../../helpers/get-raw-transaction");
 var decodeRawTransaction = require("../../helpers/decode-raw-transaction");
+var getFiatValuHelper = require("../../helpers/get-fiat-value");
 var currencyConversionHelper = require("../../helpers/get-currency-conversion");
 const constants = require('../../config/constants');
 // Controllers
@@ -196,9 +197,11 @@ class UsersController extends AppController {
                             "message": "test"
                         }
 
+                        console.log("sendObject", sendObject)
+
                         var userReceiveAddress = await sendHelper.sendData(sendObject);
                         var getTransactionDetails = await transactionDetailHelper.getTransaction(userReceiveAddress);
-                        console.log(JSON.stringify(getTransactionDetails))
+                        console.log((getTransactionDetails))
                         if (getTransactionDetails != undefined) {
                             var realNetworkFee = parseFloat(-(getTransactionDetails.fee)).toFixed(8)
                             var balanceUpdate = parseFloat(faldax_fee) + parseFloat(Math.abs(realNetworkFee))
@@ -216,6 +219,10 @@ class UsersController extends AppController {
                                     "placed_balance": placedBlanaceValueUpdate
                                 })
 
+                            var getFiatValues = await getFiatValuHelper.getFiatValue(process.env.COIN);
+
+                            console.log("getFiatValues", getFiatValues)
+
                             var transactionData = await WalletHistoryModel
                                 .query()
                                 .insert({
@@ -231,7 +238,8 @@ class UsersController extends AppController {
                                     "actual_network_fees": -(getTransactionDetails.fee),
                                     "estimated_network_fees": 0.01,
                                     "user_id": walletData.user_id,
-                                    "is_admin": is_admin
+                                    "is_admin": is_admin,
+                                    "fiat_values": getFiatValues
                                 });
 
                             var transactionValue = await TransactionTableModel
@@ -291,7 +299,8 @@ class UsersController extends AppController {
                                         "actual_network_fees": 0.0,
                                         "estimated_network_fees": 0.0,
                                         "user_id": 36,
-                                        "is_admin": true
+                                        "is_admin": true,
+                                        "fiat_values": getFiatValues
                                     })
                             }
                         }
