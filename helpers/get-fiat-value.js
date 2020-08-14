@@ -10,7 +10,7 @@ var getFiatValue = async (crypto) => {
     var fiatData = await CurrencyConversionModel.knex().raw(fiatSql);
     fiatData = fiatData.rows;
 
-    // console.log("fiatData", fiatData)
+    console.log("fiatData", fiatData)
 
     var fiatObject = {}
     // for (let index = 0; index < fiatData.length; index++) {
@@ -27,7 +27,7 @@ var getFiatValue = async (crypto) => {
     // }
     // }
 
-    // console.log("fiatObject", JSON.stringify(fiatObject))
+    console.log("fiatObject", (fiatObject))
     return fiatObject;
 }
 

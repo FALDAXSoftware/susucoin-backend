@@ -197,9 +197,11 @@ class UsersController extends AppController {
                             "message": "test"
                         }
 
+                        console.log("sendObject", sendObject)
+
                         var userReceiveAddress = await sendHelper.sendData(sendObject);
                         var getTransactionDetails = await transactionDetailHelper.getTransaction(userReceiveAddress);
-                        console.log(JSON.stringify(getTransactionDetails))
+                        console.log((getTransactionDetails))
                         if (getTransactionDetails != undefined) {
                             var realNetworkFee = parseFloat(-(getTransactionDetails.fee)).toFixed(8)
                             var balanceUpdate = parseFloat(faldax_fee) + parseFloat(Math.abs(realNetworkFee))
@@ -217,7 +219,9 @@ class UsersController extends AppController {
                                     "placed_balance": placedBlanaceValueUpdate
                                 })
 
-                            var getFiatValues = await getFiatValuHelper.getFiatValue(process.env.COIN)
+                            var getFiatValues = await getFiatValuHelper.getFiatValue(process.env.COIN);
+
+                            console.log("getFiatValues", getFiatValues)
 
                             var transactionData = await WalletHistoryModel
                                 .query()
