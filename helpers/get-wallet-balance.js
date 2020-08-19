@@ -33,7 +33,7 @@ var balanceData = async (address) => {
             })
         return balanceValue;
     } catch (error) {
-        console.log("Balance error :: ", error);
+        console.log("Balance error :: ", JSON.stringify(error));
     }
 }
 

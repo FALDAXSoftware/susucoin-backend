@@ -23,6 +23,7 @@ var listTransactionHelper = require("../../helpers/list-transaction")
 var balanceValueHelper = require("../../helpers/get-balance");
 var getRawTransaction = require("../../helpers/get-raw-transaction");
 var decodeRawTransaction = require("../../helpers/decode-raw-transaction");
+var getFiatValuHelper = require("../../helpers/get-fiat-value");
 var currencyConversionHelper = require("../../helpers/get-currency-conversion");
 const constants = require('../../config/constants');
 // Controllers
@@ -50,6 +51,7 @@ class UsersController extends AppController {
 
     async createUserAddress(req, res) {
         try {
+            console.log(JSON.stringify(req.body));
             var user_id = req.body.user_id;
             var label = req.body.label;
             var coinData = await CoinsModel
@@ -70,10 +72,11 @@ class UsersController extends AppController {
                     .andWhere("coin_id", coinData.id)
                     .orderBy('id', 'DESC')
 
-                console.log("walletData", walletData)
+                console.log("walletData", JSON.stringify(walletData))
 
                 if (walletData == undefined) {
                     var userReceiveAddress = await addressHelper.addressData();
+                    console.log(JSON.stringify(userReceiveAddress));
 
                     var dataValue = await WalletModel
                         .query()
@@ -88,6 +91,8 @@ class UsersController extends AppController {
                             "balance": 0.0,
                             "placed_balance": 0.0
                         })
+
+                    console.log(JSON.stringify(dataValue))
                     return res
                         .status(200)
                         .json({
@@ -112,7 +117,7 @@ class UsersController extends AppController {
                     })
             }
         } catch (error) {
-            console.log(error)
+            console.log(JSON.stringify(error))
         }
     }
 
@@ -148,7 +153,7 @@ class UsersController extends AppController {
                 })
 
         } catch (error) {
-            console.log("Wallet Address error :: ", error);
+            console.log("Wallet Address error :: ", JSON.stringify(error));
         }
     }
 
@@ -156,25 +161,19 @@ class UsersController extends AppController {
 
     async userSendFund(req, res) {
         try {
-            console.log(req.body)
+            console.log(JSON.stringify(req.body))
             var user_id = req.body.user_id;
             var amount = req.body.amount;
             var destination_address = req.body.destination_address;
             var faldax_fee = req.body.faldax_fee;
             var network_fee = req.body.network_fee;
             var is_admin = (req.body.is_admin) ? (req.body.is_admin) : false;
-            console.log(req.body);
-            console.log("is_admin", is_admin)
             var coinData = await CoinsModel
                 .query()
                 .first()
-                // .where('deleted_at', null)
                 .andWhere('coin_code', process.env.COIN)
-                // .andWhere('is_active', true)
                 .andWhere('type', 2)
                 .orderBy('id', 'DESC')
-
-            console.log(coinData);
 
             if (coinData != undefined) {
 
@@ -187,15 +186,10 @@ class UsersController extends AppController {
                     .andWhere("is_admin", is_admin)
                     .orderBy('id', 'DESC');
 
-                console.log("walletData", walletData)
+                console.log(JSON.stringify(walletData));
 
-                // var getAccountBalance = await balanceValueHelper.balanceData();
                 if (walletData != undefined) {
-                    console.log("parseFloat(faldax_fee)", parseFloat(faldax_fee))
-                    console.log("parseFloat(amount)", parseFloat(amount))
                     var balanceChecking = parseFloat(amount) + parseFloat(faldax_fee) + parseFloat(network_fee);
-                    console.log("balanceChecking", balanceChecking)
-                    // if (getAccountBalance >= balanceChecking) {
                     if (walletData.placed_balance >= balanceChecking) {
                         var sendObject = {
                             "address": destination_address,
@@ -207,15 +201,13 @@ class UsersController extends AppController {
 
                         var userReceiveAddress = await sendHelper.sendData(sendObject);
                         var getTransactionDetails = await transactionDetailHelper.getTransaction(userReceiveAddress);
-                        console.log("getTransactionDetails", getTransactionDetails)
+                        console.log((getTransactionDetails))
                         if (getTransactionDetails != undefined) {
                             var realNetworkFee = parseFloat(-(getTransactionDetails.fee)).toFixed(8)
                             var balanceUpdate = parseFloat(faldax_fee) + parseFloat(Math.abs(realNetworkFee))
                             var balanceValueUpdateValue = parseFloat(amount) + parseFloat(balanceUpdate);
                             var balanceValueUpdate = parseFloat(walletData.balance) - parseFloat(balanceValueUpdateValue);
                             var placedBlanaceValueUpdate = parseFloat(walletData.placed_balance) - parseFloat(balanceValueUpdateValue)
-                            console.log("balanceValueUpdate", balanceValueUpdate)
-                            console.log("placedBlanaceValueUpdate", placedBlanaceValueUpdate)
                             var walletDataUpdate = await WalletModel
                                 .query()
                                 .where("deleted_at", null)
@@ -226,6 +218,10 @@ class UsersController extends AppController {
                                     "balance": balanceValueUpdate,
                                     "placed_balance": placedBlanaceValueUpdate
                                 })
+
+                            var getFiatValues = await getFiatValuHelper.getFiatValue(process.env.COIN);
+
+                            console.log("getFiatValues", getFiatValues)
 
                             var transactionData = await WalletHistoryModel
                                 .query()
@@ -242,7 +238,8 @@ class UsersController extends AppController {
                                     "actual_network_fees": -(getTransactionDetails.fee),
                                     "estimated_network_fees": 0.01,
                                     "user_id": walletData.user_id,
-                                    "is_admin": is_admin
+                                    "is_admin": is_admin,
+                                    "fiat_values": getFiatValues
                                 });
 
                             var transactionValue = await TransactionTableModel
@@ -276,8 +273,6 @@ class UsersController extends AppController {
                             if (walletBalance != undefined) {
                                 var amountToBeAdded = 0.0
                                 amountToBeAdded = parseFloat(faldax_fee)
-                                console.log("amountToBeAdded", amountToBeAdded)
-                                console.log("walletBalance.balance", walletBalance.balance)
                                 var updateWalletBalance = await WalletModel
                                     .query()
                                     .where("deleted_at", null)
@@ -304,7 +299,8 @@ class UsersController extends AppController {
                                         "actual_network_fees": 0.0,
                                         "estimated_network_fees": 0.0,
                                         "user_id": 36,
-                                        "is_admin": true
+                                        "is_admin": true,
+                                        "fiat_values": getFiatValues
                                     })
                             }
                         }
@@ -342,17 +338,18 @@ class UsersController extends AppController {
                     })
             }
         } catch (error) {
-            console.log(error)
+            console.log(JSON.stringify(error))
         }
     }
 
     // Get User Balance
     async getUserBalance(req, res) {
         try {
+            console.log("req.body", req.body)
             var address = req.body.address;
 
             var balanceValue = await balanceHelper.getReceiveByAddress(address);
-            console.log("balanceValue", balanceValue)
+            // console.log("balanceValue", balanceValue)
             return res
                 .status(200)
                 .json({
@@ -361,22 +358,23 @@ class UsersController extends AppController {
                     "data": balanceValue
                 })
         } catch (error) {
-            console.log(error)
+            console.log(JSON.stringify(error))
         }
     }
 
     // Get User Transactions Value
     async getUserTransactions(req, res) {
         try {
+            console.log("req.body", req.body)
             var address = req.body.address;
 
             var transactionList = await transactionHelper.balanceData(address)
             var transactionDetails = [];
-            console.log(transactionList)
+            console.log(JSON.stringify(transactionList))
             for (var i = 0; i < transactionList.length; i++) {
-                console.log(transactionList[i])
+                // console.log(transactionList[i])
                 var detailValue = await transactionDetailHelper.getTransaction(transactionList[i]);
-                console.log("Transaction ID >>>>>>>", transactionList[i], "-------==--------", detailValue);
+                // console.log("Transaction ID >>>>>>>", transactionList[i], "-------==--------", detailValue);
                 var obejct = {
                     "txid": transactionList[i],
                     "details": detailValue.details,
@@ -392,7 +390,7 @@ class UsersController extends AppController {
                     "data": transactionDetails
                 })
         } catch (error) {
-            console.log(error)
+            console.log(JSON.stringify(error))
         }
     }
 
@@ -400,7 +398,7 @@ class UsersController extends AppController {
     async getListTransactions(req, res) {
         try {
             var transactionList = await listTransactionHelper.listTransaction()
-            console.log(transactionList)
+            console.log(JSON.stringify(transactionList))
             return res
                 .status(200)
                 .json({
@@ -409,7 +407,7 @@ class UsersController extends AppController {
                     "data": transactionList
                 })
         } catch (error) {
-            console.log(error)
+            console.log(JSON.stringify(error))
         }
     }
 
@@ -423,7 +421,7 @@ class UsersController extends AppController {
             if (fs.existsSync('transaction.txt')) {
                 await fs.readFile('transaction.txt', (err, data) => {
                     if (err) {
-                        console.log(err)
+                        console.log(JSON.stringify(err))
                     }
                     var value = data.toString();
                     transactionHash = value.split(`"`)
@@ -435,7 +433,7 @@ class UsersController extends AppController {
                 if (flag == 2) {
                     var value = await fs.writeFile("transaction.txt", JSON.stringify(dataValue), async function (err) {
                         if (err) {
-                            console.log(err)
+                            console.log(JSON.stringify(err))
                         } else {
                             value = "File Written Successfully";
                         }
@@ -461,10 +459,10 @@ class UsersController extends AppController {
                     return 1;
                 } else if (dataValue[i].category == "receive") {
                     var dataTransaction = await getRawTransaction.getTransaction(dataValue[i].txid)
-                    console.log(dataTransaction)
+                    // console.log(dataTransaction)
                     var dataTransactionValue = await decodeRawTransaction.getTransaction(dataTransaction);
                     if (dataTransactionValue != null) {
-                        console.log("dataTransactionValue", dataTransactionValue);
+                        // console.log("dataTransactionValue", dataTransactionValue);
                         var sourcxeAddressValue = (dataTransactionValue['vout'])
                         var valiueIm = (dataTransactionValue['vout']);
                         sourcxeAddressValue = valiueIm[0]['scriptPubKey']['addresses'][0]
@@ -476,7 +474,7 @@ class UsersController extends AppController {
                             .andWhere('transaction_id', dataValue[i].txid)
                             .andWhere('transaction_type', 'receive')
                             .orderBy('id', 'DESC');
-                        console.log("walletHistoryData", walletHistoryData);
+                        // console.log("walletHistoryData", walletHistoryData);
 
                         if (walletHistoryData == undefined) {
                             // console.log("sourcxeAddressValue", sourcxeAddressValue)
@@ -488,10 +486,10 @@ class UsersController extends AppController {
                                 .andWhere('deleted_at', null)
                                 .orderBy('id', 'DESC');
 
-                            console.log("walletData", walletData);
+                            // console.log("walletData", walletData);
 
                             if (walletData != undefined) {
-                                console.log("In sourcxeAddressValue", sourcxeAddressValue)
+                                // console.log("In sourcxeAddressValue", sourcxeAddressValue)
                                 var object = {
                                     'destination_address': dataValue[i].address,
                                     'source_address': sourcxeAddressValue,
@@ -511,7 +509,7 @@ class UsersController extends AppController {
                                     "is_admin": false
                                 }
 
-                                console.log("object", object)
+                                // console.log("object", object)
                                 var walletHistoryData = await WalletHistoryModel
                                     .query()
                                     .insert({
@@ -559,9 +557,7 @@ class UsersController extends AppController {
                                 var coinData = await CoinsModel
                                     .query()
                                     .first()
-                                    // .where('deleted_at', null)
                                     .andWhere('coin_code', process.env.COIN)
-                                    // .andWhere('is_active', true)
                                     .andWhere('type', 2)
                                     .orderBy('id', 'DESC')
 
@@ -606,20 +602,22 @@ class UsersController extends AppController {
     // Webhook for transaction history
     async returnWebhookdata() {
         try {
-            console.log("ISNIDE METHOD")
+            console.log("ISNIDE CRON METHOD")
             var transactionHash;
             var transactionValue = await module.exports.fileValueUpdate("", 1)
             var dataValue = await listTransactionHelper.listTransaction(10, 0);
             var data = dataValue[dataValue.length - 1].txid;
             var value = await module.exports.getTransactionData(false, 10, 0, transactionValue)
             var transactionValue = await module.exports.fileValueUpdate(data, 2)
+            console.log("Webhook Done")
         } catch (error) {
-            console.log(error);
+            console.log(JSON.stringify(error));
         }
     }
 
     async getEquivalentValue(req, res) {
         try {
+            console.log("CRON FOR PRICE UPDATE")
             var data = await currencyConversionHelper.convertValue();
             return res
                 .status(200)
@@ -629,7 +627,23 @@ class UsersController extends AppController {
                     "data": data
                 })
         } catch (error) {
-            console.log(error);
+            console.log(JSON.stringify(error));
+        }
+    }
+
+    async getBalanceValue(req, res) {
+        try {
+            var getAccountBalance = await balanceValueHelper.balanceData();
+
+            return res
+                .status(200)
+                .json({
+                    "status": 200,
+                    "message": "User Balance has been listed successfully",
+                    "data": getAccountBalance
+                })
+        } catch (error) {
+
         }
     }
 
